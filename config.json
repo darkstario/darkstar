@@ -3,6 +3,8 @@
     "listen_interface": "0.0.0.0",
     "listen_port": "80",
     "listen_ssl_port": "443",
+    "max_connections": "2048",
+    "timeout_in_ms" "1500",
     "vhosts": [
         {
 	    "server_name": "domain.com",
