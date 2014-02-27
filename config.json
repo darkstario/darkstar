@@ -15,12 +15,20 @@
 	    "whitelist_ips": "10.10.10.1",
             "description": "My application at domain.com",
 	    "ssl_enable": true,
-	    "ssl_cert": "/etc/wag/ssl/domain_com.pem",
-            "filters": [],
-            "blacklist": [],
+	    "ssl_cert": "/etc/wag/ssl/domain_com.pem"
         },
         {
-	    "server_name": "otherdomain.com",
+            "server_name": "otherdomain.com",
+            "access_log": "/var/log/wag/otherdomain.com",
+            "error_log": "/var/log/wag/otherdomain.com-error",
+            "backend_servers": "web1.otherdomain.com:8080, web2.otherdomain.com:8080",
+            "apikey": "/path/to/api.key",
+            "application_id": "/etc/wag/apps/app-id.conf",
+            "blacklist_ips": "12.34.56.78",
+            "whitelist_ips": "10.10.10.1",
+            "description": "My application at otherdomain.com",
+            "ssl_enable": true,
+            "ssl_cert": "/etc/wag/ssl/otherdomain.com.pem"
         }
     ]
 }
