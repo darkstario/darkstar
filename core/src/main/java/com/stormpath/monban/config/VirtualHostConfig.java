@@ -7,6 +7,8 @@ public class VirtualHostConfig {
     private LogConfig log;
     private BalanceConfig balance;
     private StormpathConfig stormpath;
+    private DucksboardConfig ducksboard;
+    private DatadogConfig datadog;
 
     public VirtualHostConfig(){}
 
@@ -28,5 +30,13 @@ public class VirtualHostConfig {
 
     public StormpathConfig getStormpath() {
         return stormpath;
+    }
+
+    public DucksboardConfig getDucksboard() {
+        return ducksboard;
+    }
+
+    public DatadogConfig getDatadog() {
+        return datadog;
     }
 }

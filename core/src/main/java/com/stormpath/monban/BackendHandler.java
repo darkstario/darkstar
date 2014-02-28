@@ -1,5 +1,8 @@
 package com.stormpath.monban;
 
+import com.google.common.eventbus.EventBus;
+import com.stormpath.monban.event.BytesEvent;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -10,9 +13,11 @@ import io.netty.channel.ChannelHandlerContext;
 public class BackendHandler extends ChannelHandlerAdapter {
 
     private final Channel inboundChannel;
+    private final EventBus eventBus;
 
-    public BackendHandler(Channel inboundChannel) {
+    public BackendHandler(Channel inboundChannel, EventBus eventBus) {
         this.inboundChannel = inboundChannel;
+        this.eventBus = eventBus;
     }
 
     @Override
@@ -23,6 +28,16 @@ public class BackendHandler extends ChannelHandlerAdapter {
 
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
+
+        if (msg instanceof ByteBuf) {
+            ByteBuf buf = (ByteBuf)msg;
+            int count = buf.readableBytes();
+            if (count > 0) {
+                BytesEvent event = new BytesEvent(count, false);
+                this.eventBus.post(event);
+            }
+        }
+
         inboundChannel.writeAndFlush(msg).addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {

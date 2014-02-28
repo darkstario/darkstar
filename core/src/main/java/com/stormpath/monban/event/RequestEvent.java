@@ -1,19 +1,13 @@
 package com.stormpath.monban.event;
 
-public class RequestEvent {
-
-    private final long millis;
+public class RequestEvent extends Event {
 
     private final long requestId;
     private final int numBytes;
 
     public RequestEvent(long requestId, int numBytes) {
-        millis = System.currentTimeMillis();
         this.requestId = requestId;
         this.numBytes = numBytes;
     }
 
-    public long getMillis() {
-        return millis;
-    }
 }

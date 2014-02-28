@@ -72,7 +72,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop())
                 .channel(ctx.channel().getClass())
-                .handler(new BackendHandler(inboundChannel))
+                .handler(new BackendHandler(inboundChannel, this.eventBus))
                 .option(ChannelOption.AUTO_READ, false);
 
         ChannelFuture f = b.connect(remoteHost, remotePort);
