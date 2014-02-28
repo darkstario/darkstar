@@ -3,7 +3,8 @@
   ~ Copyright (c) 2014, Stormpath, Inc.
   ~ All rights reserved.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -18,7 +19,8 @@
     <version>0-SNAPSHOT</version>
     <name>Monban</name>
     <description>
-        Monban (Japanese for 'gatekeeper') is a 'big data' reverse proxy load balancer that also enforces security policies.
+        Monban (Japanese for 'gatekeeper') is a 'big data' reverse proxy load balancer that also enforces security
+        policies.
     </description>
     <url>https://stormpath.atlassian.net/browse/MONBAN</url>
     <inceptionYear>2014</inceptionYear>
@@ -57,12 +59,15 @@
         <groovy.version>1.8.5</groovy.version>
         <guava.version>14.0-rc3</guava.version>
         <hazelcast.version>2.6</hazelcast.version>
-        <jackson.version>1.9.13</jackson.version>
+        <httpClient.version>4.2.2</httpClient.version>
+        <jackson.version>2.3.1</jackson.version>
         <joda.time.version>2.1</joda.time.version>
         <logback.version>0.9.24</logback.version>
+        <shiro.version>1.2.2</shiro.version>
         <slf4j.version>1.6.1</slf4j.version>
         <sonar.plugin.version>2.0</sonar.plugin.version>
-        <stormpath.sdk.version>0.9.2</stormpath.sdk.version>
+        <stormpath.sdk.version>0.9.3-SNAPSHOT</stormpath.sdk.version>
+        <metrics.version>3.0.1</metrics.version>
     </properties>
 
     <modules>
@@ -78,9 +83,62 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.stormpath.sdk</groupId>
+                <artifactId>stormpath-sdk-api</artifactId>
+                <version>${stormpath.sdk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.stormpath.sdk</groupId>
+                <artifactId>stormpath-sdk-httpclient</artifactId>
+                <version>${stormpath.sdk.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
                 <version>5.0.0.Alpha1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>16.0.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.codahale.metrics</groupId>
+                <artifactId>metrics-core</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.shiro</groupId>
+                <artifactId>shiro-core</artifactId>
+                <version>${shiro.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpClient.version}</version>
+                <!-- We use SLF4J instead: -->
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>
