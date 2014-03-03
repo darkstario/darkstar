@@ -1,31 +1,18 @@
 package com.stormpath.monban;
 
-import com.google.common.eventbus.EventBus;
-import com.stormpath.monban.config.VirtualHostConfig;
-import com.stormpath.sdk.application.Application;
-import com.stormpath.sdk.client.Client;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
-//import io.netty.handler.logging.LogLevel;
-//import io.netty.handler.logging.LoggingHandler;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
 
+@Component
 public class MonbanInitializer extends ChannelInitializer<SocketChannel> {
 
-    private final String remoteHost;
-    private final int remotePort;
-    private final EventBus eventBus;
-    private final VirtualHostConfig vhostConfig;
-    private final Application application;
-
-    public MonbanInitializer(String remoteHost, int remotePort, EventBus eventBus, VirtualHostConfig vhostConfig, Application application) {
-        this.remoteHost = remoteHost;
-        this.remotePort = remotePort;
-        this.eventBus = eventBus;
-        this.vhostConfig = vhostConfig;
-        this.application = application;
-    }
+    @Autowired
+    private ApplicationContext appCtx;
 
     @Override
     public void initChannel(SocketChannel ch) throws Exception {
@@ -38,6 +25,8 @@ public class MonbanInitializer extends ChannelInitializer<SocketChannel> {
 
         //p.addLast("logger", new LoggingHandler(LogLevel.INFO));
         p.addLast("httpRequestDecoder", new HttpRequestDecoder());
-        p.addLast("frontendHandler", new FrontendHttpHandler(remoteHost, remotePort, this.eventBus, this.vhostConfig,  this.application));
+
+        FrontendHttpHandler handler = appCtx.getBean(FrontendHttpHandler.class); //must be prototype scoped
+        p.addLast("frontendHandler", handler);
     }
 }

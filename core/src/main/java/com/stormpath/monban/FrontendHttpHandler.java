@@ -2,7 +2,8 @@ package com.stormpath.monban;
 
 import com.google.common.base.Charsets;
 import com.google.common.eventbus.EventBus;
-import com.stormpath.monban.config.VirtualHostConfig;
+import com.stormpath.monban.config.Host;
+import com.stormpath.monban.config.json.VirtualHostConfig;
 import com.stormpath.monban.event.RequestEvent;
 import com.stormpath.sdk.application.Application;
 import com.stormpath.sdk.authc.AuthenticationResult;
@@ -35,8 +36,7 @@ import static io.netty.handler.codec.http.HttpVersion.*;
 
 public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
-    private final String remoteHost;
-    private final int remotePort;
+    private final Host originHost;
     private final EventBus eventBus;
     private final VirtualHostConfig config;
     private final Application application;
@@ -47,15 +47,13 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
     private HttpRequest request;
     private ByteBuf buf;
 
-    public FrontendHttpHandler(String remoteHost, int remotePort, EventBus eventBus, VirtualHostConfig config, Application application) {
-        this.remoteHost = remoteHost;
-        this.remotePort = remotePort;
+    public FrontendHttpHandler(Host originHost, EventBus eventBus, VirtualHostConfig config, Application application) {
+        this.originHost = originHost;
         this.eventBus = eventBus;
         this.application = application;
         this.config = config;
         this.pathMatcher = new AntPathMatcher();
     }
-
 
     protected void ensureBuf(ChannelHandlerContext ctx) {
         if (buf == null || buf.refCnt() == 0) {
@@ -75,7 +73,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                 .handler(new BackendHandler(inboundChannel, this.eventBus))
                 .option(ChannelOption.AUTO_READ, false);
 
-        ChannelFuture f = b.connect(remoteHost, remotePort);
+        ChannelFuture f = b.connect(originHost.getName(), originHost.getPort());
 
         outboundChannel = f.channel();
 
@@ -117,7 +115,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
             boolean authcRequired = false;
 
-            for(String pattern : config.getStormpath().getAuthenticate()) {
+            for (String pattern : config.getStormpath().getAuthenticate()) {
                 if (pathMatcher.match(pattern, uri)) {
                     authcRequired = true;
                     break;
@@ -148,7 +146,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
                     if (headerName.equalsIgnoreCase("X-Forwarded-For")) {
 
-                        headerValue += ", " + getHost(ctx.channel().remoteAddress()).getHost();
+                        headerValue += ", " + getHost(ctx.channel().remoteAddress()).getName();
                         xForwardedForSet = true;
                     }
 
@@ -170,7 +168,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             }
 
             if (!xForwardedForSet) {
-                writeHeader(buf, "X-Forwarded-For", getHost(ctx.channel().remoteAddress()).getHost());
+                writeHeader(buf, "X-Forwarded-For", getHost(ctx.channel().remoteAddress()).getName());
             }
 
             if (!xForwardedHostSet && host != null) {
@@ -210,7 +208,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
                     String clientHost = host;
                     if (clientHost == null) {
-                        clientHost = getHost(ctx.channel().remoteAddress()).getHost();
+                        clientHost = getHost(ctx.channel().remoteAddress()).getName();
                     }
 
                     UsernamePasswordRequest request = new UsernamePasswordRequest(username, password, clientHost);
@@ -375,22 +373,4 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         }
     }
 
-    private final static class Host {
-
-        private final String host;
-        private final int port;
-
-        private Host(String host, int port) {
-            this.host = host;
-            this.port = port;
-        }
-
-        private String getHost() {
-            return host;
-        }
-
-        private int getPort() {
-            return port;
-        }
-    }
 }

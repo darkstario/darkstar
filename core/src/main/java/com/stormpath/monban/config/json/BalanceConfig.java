@@ -1,4 +1,4 @@
-package com.stormpath.monban.config;
+package com.stormpath.monban.config.json;
 
 import java.util.List;
 

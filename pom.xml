@@ -62,10 +62,11 @@
         <httpClient.version>4.2.2</httpClient.version>
         <jackson.version>2.3.1</jackson.version>
         <joda.time.version>2.1</joda.time.version>
-        <logback.version>0.9.24</logback.version>
+        <logback.version>1.1.1</logback.version>
         <shiro.version>1.2.2</shiro.version>
-        <slf4j.version>1.6.1</slf4j.version>
+        <slf4j.version>1.7.6</slf4j.version>
         <sonar.plugin.version>2.0</sonar.plugin.version>
+        <spring.version>4.0.2.RELEASE</spring.version>
         <stormpath.sdk.version>0.9.3-SNAPSHOT</stormpath.sdk.version>
         <metrics.version>3.0.1</metrics.version>
     </properties>
@@ -128,10 +129,27 @@
                 <artifactId>shiro-core</artifactId>
                 <version>${shiro.version}</version>
             </dependency>
+            <!--
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
                 <version>${httpClient.version}</version>
+                <!- - We use SLF4J instead: - ->
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            -->
+            <!-- See http://docs.spring.io/spring/docs/4.0.2.RELEASE/spring-framework-reference/htmlsingle/#overview-maven-bom -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-framework-bom</artifactId>
+                <version>${spring.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
                 <!-- We use SLF4J instead: -->
                 <exclusions>
                     <exclusion>
@@ -140,6 +158,25 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jcl-over-slf4j</artifactId>
+                <version>${slf4j.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -273,6 +310,7 @@
                 </plugins>
             </build>
         </profile>
+        <!--
         <profile>
             <id>docs</id>
             <build>
@@ -307,7 +345,7 @@
 
 </script>
 
-<!-- kissmetrics -->
+<!- - kissmetrics - ->
 <script type="text/javascript">
   var _kmq = _kmq || [];
   var _kmk = _kmk || '684b854336bd3a6523260ebd991eec06b18b929a';
@@ -323,7 +361,7 @@
   _kms('//doug1izaerwt3.cloudfront.net/' + _kmk + '.1.js');
 </script>
 
-<!-- Optimizely -->
+<!- - Optimizely - ->
 <script src="//cdn.optimizely.com/js/225847041.js"></script>
                                 ]]></top>
                         </configuration>
@@ -345,7 +383,7 @@
                 </plugins>
             </build>
         </profile>
+        -->
     </profiles>
-
 
 </project>

@@ -14,7 +14,7 @@
         "error": "/var/log/monban/domain.com/error.log"
       },
       "balance": {
-        "members": ["dlaube.com"]
+        "members": ["localhost:4000"]
       },
       "stormpath": {
         "apiKeyFile": "${user.home}/.stormpath/apiKey.properties",
