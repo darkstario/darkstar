@@ -124,7 +124,7 @@ public class MonbanConfig {
     @Bean
     @Scope("prototype")
     public FrontendHttpHandler frontendHttpHandler() {
-        return new FrontendHttpHandler(originHost(), eventBus(), vhostConfig(), stormpathApplication());
+        return new FrontendHttpHandler(originHost());
     }
 
     @Bean
@@ -155,7 +155,8 @@ public class MonbanConfig {
         return path;
     }
 
-    private StormpathConfig stormpathConfig() {
+    @Bean
+    public StormpathConfig stormpathConfig() {
         return vhostConfig().getStormpath();
     }
 

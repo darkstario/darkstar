@@ -3,7 +3,7 @@ package com.stormpath.monban;
 import com.google.common.base.Charsets;
 import com.google.common.eventbus.EventBus;
 import com.stormpath.monban.config.Host;
-import com.stormpath.monban.config.json.VirtualHostConfig;
+import com.stormpath.monban.config.json.StormpathConfig;
 import com.stormpath.monban.event.RequestEvent;
 import com.stormpath.sdk.application.Application;
 import com.stormpath.sdk.authc.AuthenticationResult;
@@ -25,6 +25,7 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.shiro.codec.Base64;
 import org.apache.shiro.util.AntPathMatcher;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -37,9 +38,15 @@ import static io.netty.handler.codec.http.HttpVersion.*;
 public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
     private final Host originHost;
-    private final EventBus eventBus;
-    private final VirtualHostConfig config;
-    private final Application application;
+
+    @Autowired
+    private EventBus eventBus;
+
+    @Autowired
+    private StormpathConfig stormpathConfig;
+
+    @Autowired
+    private Application application;
 
     private Channel outboundChannel;
     private AntPathMatcher pathMatcher;
@@ -47,11 +54,8 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
     private HttpRequest request;
     private ByteBuf buf;
 
-    public FrontendHttpHandler(Host originHost, EventBus eventBus, VirtualHostConfig config, Application application) {
+    public FrontendHttpHandler(Host originHost) {
         this.originHost = originHost;
-        this.eventBus = eventBus;
-        this.application = application;
-        this.config = config;
         this.pathMatcher = new AntPathMatcher();
     }
 
@@ -115,7 +119,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
             boolean authcRequired = false;
 
-            for (String pattern : config.getStormpath().getAuthenticate()) {
+            for (String pattern : stormpathConfig.getAuthenticate()) {
                 if (pathMatcher.match(pattern, uri)) {
                     authcRequired = true;
                     break;
