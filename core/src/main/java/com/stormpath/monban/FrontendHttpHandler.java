@@ -29,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 import static io.netty.handler.codec.http.HttpConstants.*;
@@ -110,17 +112,22 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         if (msg instanceof HttpRequest) {
             request = (HttpRequest) msg;
 
-            //check to see if authc required:
-            String uri = request.getUri();
-            int queryIndex = uri.indexOf('?');
-            if (queryIndex > 0) { //we only care about the base path for the authc check
-                uri = uri.substring(0, queryIndex);
+            URI requestUri;
+
+            try {
+                requestUri = new URI(request.getUri());
+            } catch (URISyntaxException e) {
+                sendError(ctx, HttpResponseStatus.BAD_REQUEST, null);
+                return;
             }
+
+            //check to see if authc required:
+            String decodedPath = requestUri.getPath();
 
             boolean authcRequired = false;
 
             for (String pattern : stormpathConfig.getAuthenticate()) {
-                if (pathMatcher.match(pattern, uri)) {
+                if (pathMatcher.match(pattern, decodedPath)) {
                     authcRequired = true;
                     break;
                 }
@@ -133,11 +140,15 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             buf.writeBytes(ascii(request.getProtocolVersion()));
             appendCrlf(buf);
 
-            String host = null;
+            String hostHeaderValue = null;
             String authzHeaderValue = null;
 
             boolean xForwardedForSet = false;
             boolean xForwardedHostSet = false;
+
+            //HTTP Proxies (like this gateway) replace the HOST header value with the target (origin) server, and
+            //retain the originally-requested host in the 'X-Forwarded-Host' header.
+            writeHeader(buf, HOST.toString(), originHost.toString());
 
             HttpHeaders headers = request.headers();
 
@@ -149,17 +160,19 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                     String headerValue = header.getValue();
 
                     if (headerName.equalsIgnoreCase("X-Forwarded-For")) {
-
                         headerValue += ", " + getHost(ctx.channel().remoteAddress()).getName();
                         xForwardedForSet = true;
                     }
 
                     if (headerName.equalsIgnoreCase("X-Forwarded-Host")) {
-                        xForwardedHostSet = true;
+                        xForwardedHostSet = true; //an upstream proxy/gateway already set it
                     }
 
                     if (headerName.equalsIgnoreCase(HOST.toString())) {
-                        host = headerValue;
+                        hostHeaderValue = headerValue;
+                        //we already wrote this header (above, before iterating), so skip writing this specific header,
+                        //but retain the value so we can use it to set the X-Forwarded-Host later
+                        continue;
                     }
 
                     if (headerName.equalsIgnoreCase(AUTHORIZATION.toString())) {
@@ -175,8 +188,25 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                 writeHeader(buf, "X-Forwarded-For", getHost(ctx.channel().remoteAddress()).getName());
             }
 
-            if (!xForwardedHostSet && host != null) {
-                writeHeader(buf, "X-Forwarded-Host", host);
+            if (!xForwardedHostSet) {
+                String value = hostHeaderValue;
+
+                if (requestUri.isAbsolute()) {
+                    //If the requestUri is absolute, the HTTP server MUST ignore any Host header and use
+                    //the host in the requestUri: http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2
+                    value = requestUri.getHost();
+                    if (requestUri.getPort() > 0) {
+                      value += ":" + requestUri.getPort();
+                    }
+                } else if (hostHeaderValue == null) {
+                    //HTTP 1.1 spec requires that the client MUST specify either an absolute URI or the HOST header, and
+                    //if they don't specify either, a 400 bad request must be sent:
+                    sendError(ctx, HttpResponseStatus.BAD_REQUEST, null);
+                    return;
+                }
+
+                //all is well, set the value as required:
+                writeHeader(buf, "X-Forwarded-Host", value);
             }
 
             boolean writeAuthzHeader = authzHeaderValue != null;
@@ -188,7 +218,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                     return;
                 }
 
-                if (authzHeaderValue.toLowerCase().trim().startsWith("basic ")) {
+                if (authzHeaderValue != null && authzHeaderValue.toLowerCase().trim().startsWith("basic ")) {
 
                     int lastSpaceIndex = authzHeaderValue.lastIndexOf(' ');
                     String schemeValue = authzHeaderValue.substring(lastSpaceIndex + 1);
@@ -210,22 +240,21 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                         username = decoded;
                     }
 
-                    String clientHost = host;
-                    if (clientHost == null) {
-                        clientHost = getHost(ctx.channel().remoteAddress()).getName();
-                    }
+                    String clientHost = getHost(ctx.channel().remoteAddress()).getName();
 
                     UsernamePasswordRequest request = new UsernamePasswordRequest(username, password, clientHost);
                     try {
                         AuthenticationResult result = this.application.authenticateAccount(request);
                         //no exception - authenticated successfully, so allow the request to continue, and
                         //replace the authz header with the authenticated account href
-                        writeHeader(buf, "X-Stormpath-Account", result.getAccount().getHref());
+                        writeHeader(buf, "X-Forwarded-User", result.getAccount().getHref());
                         writeAuthzHeader = false;
                     } catch (ResourceException e) {
                         sendBasicAuthcChallenge(ctx);
                         return;
                     }
+                } else {
+
                 }
             }
 
