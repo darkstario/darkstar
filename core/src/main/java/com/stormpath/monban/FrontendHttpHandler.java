@@ -39,8 +39,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -148,7 +146,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         }
 
         if (msg instanceof HttpRequest) {
-            request = (HttpRequest)msg;
+            HttpRequest request = (HttpRequest)msg;
             try {
                 requestUri = new URI(request.getUri());
             } catch (URISyntaxException e) {
@@ -200,6 +198,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         ensureBuf(ctx);
 
         if (msg instanceof HttpRequest) {
+            request = (HttpRequest)msg;
 
             //check to see if authc required:
             boolean authcRequired = false;
