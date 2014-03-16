@@ -7,7 +7,7 @@
   },
   "vhosts": [
     {
-      "name": "domain.com",
+      "name": "localhost",
       "description": "domain.com web app.",
       "log": {
         "access": "/var/log/monban/domain.com/access.log",

@@ -6,7 +6,7 @@ public class Host {
     private final int port;
 
     public Host(String name, int port) {
-        this.name = name;
+        this.name = name.toLowerCase();
         this.port = port;
     }
 

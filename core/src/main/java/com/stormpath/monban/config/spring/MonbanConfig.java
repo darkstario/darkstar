@@ -23,6 +23,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -121,16 +124,21 @@ public class MonbanConfig {
         return application;
     }
 
-    @Bean
+    /*@Bean
     @Scope("prototype")
     public FrontendHttpHandler frontendHttpHandler() {
-        return new FrontendHttpHandler(originHost());
-    }
+        return new FrontendHttpHandler();
+    }*/
 
-    @Bean
-    public Host originHost() {
-        String hostString = vhostConfig().getBalance().getMembers().iterator().next();
-        return hostFactory().getHost(hostString);
+    @Bean(name="virtualHosts")
+    public Map<String,VirtualHostConfig> virtualHosts() {
+        List<VirtualHostConfig> configs = JSON_CONFIG.getVhosts();
+        Map<String,VirtualHostConfig> vhosts = new LinkedHashMap<>(configs.size());
+        for( VirtualHostConfig config : configs) {
+            vhosts.put(config.getName().toLowerCase(), config);
+        }
+
+        return vhosts;
     }
 
     public VirtualHostConfig vhostConfig() {
@@ -167,6 +175,5 @@ public class MonbanConfig {
     private String datadogApiKey() {
         return vhostConfig().getDatadog().getApiKey();
     }
-
 
 }

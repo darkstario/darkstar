@@ -4,6 +4,7 @@ import com.google.common.base.Charsets;
 import com.google.common.eventbus.EventBus;
 import com.stormpath.monban.config.Host;
 import com.stormpath.monban.config.json.StormpathConfig;
+import com.stormpath.monban.config.json.VirtualHostConfig;
 import com.stormpath.monban.event.RequestEvent;
 import com.stormpath.sdk.application.Application;
 import com.stormpath.sdk.authc.AuthenticationResult;
@@ -25,21 +26,34 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.shiro.codec.Base64;
 import org.apache.shiro.util.AntPathMatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static io.netty.handler.codec.http.HttpConstants.*;
 import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 import static io.netty.handler.codec.http.HttpVersion.*;
 
+@Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
-    private final Host originHost;
+    private static final Logger log = LoggerFactory.getLogger(FrontendHttpHandler.class);
 
     @Autowired
     private EventBus eventBus;
@@ -50,15 +64,29 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
     @Autowired
     private Application application;
 
+    @Resource
+    @Qualifier("virtualHosts")
+    private Map<String, VirtualHostConfig> virtualHosts;
+
     private Channel outboundChannel;
+
+    //whether or not a frontend-to-backend tunnel is established
+    private volatile boolean tunnelEstablished;
+
     private AntPathMatcher pathMatcher;
 
     private HttpRequest request;
+    private URI requestUri;
+    private Host requestedHost;
+    private Host destinationHost;
+
+    private Queue<HttpObject> messageQueue;
+
     private ByteBuf buf;
 
-    public FrontendHttpHandler(Host originHost) {
-        this.originHost = originHost;
+    public FrontendHttpHandler() {
         this.pathMatcher = new AntPathMatcher();
+        this.messageQueue = new ConcurrentLinkedQueue<>();
     }
 
     protected void ensureBuf(ChannelHandlerContext ctx) {
@@ -69,6 +97,12 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        //start reading data immediately: we need to be able to read the inbound request headers to determine
+        //which backend origin server to connect to:
+        ctx.channel().read();
+    }
+
+    private void connectToDestination(final ChannelHandlerContext ctx, Host destination) throws Exception {
 
         final Channel inboundChannel = ctx.channel();
 
@@ -77,9 +111,10 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         b.group(inboundChannel.eventLoop())
                 .channel(ctx.channel().getClass())
                 .handler(new BackendHandler(inboundChannel, this.eventBus))
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                 .option(ChannelOption.AUTO_READ, false);
 
-        ChannelFuture f = b.connect(originHost.getName(), originHost.getPort());
+        ChannelFuture f = b.connect(destination.getName(), destination.getPort());
 
         outboundChannel = f.channel();
 
@@ -87,11 +122,10 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
-                    // connection complete start to read first data
-                    inboundChannel.read();
+                    tunnelEstablished(ctx);
                 } else {
-                    // Close the connection if the connection attempt has failed.
-                    inboundChannel.close();
+                    //can't connect to backend - show error:
+                    sendError(ctx, HttpResponseStatus.SERVICE_UNAVAILABLE, null);
                 }
             }
         });
@@ -100,20 +134,21 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
 
-        Object outboundMsg = msg;
-
-        if (msg instanceof HttpObject && !(((HttpObject) msg).getDecoderResult().isSuccess())) {
+        if (!(msg instanceof HttpObject) || !(((HttpObject) msg).getDecoderResult().isSuccess())) {
             sendError(ctx, HttpResponseStatus.BAD_REQUEST, null);
+        }
+
+        //noinspection ConstantConditions
+        HttpObject httpObject = (HttpObject)msg;
+        messageQueue.add(httpObject);
+
+        if (tunnelEstablished) {
+            processQueuedMessages(ctx);
             return;
         }
 
-        ensureBuf(ctx);
-
         if (msg instanceof HttpRequest) {
-            request = (HttpRequest) msg;
-
-            URI requestUri;
-
+            request = (HttpRequest)msg;
             try {
                 requestUri = new URI(request.getUri());
             } catch (URISyntaxException e) {
@@ -121,11 +156,54 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                 return;
             }
 
+            //HTTP Proxies (like this gateway) replace the HOST header value with the target (origin) server, and
+            //retain the originally-requested host in the 'X-Forwarded-Host' header.
+            String hostHeaderValue = request.headers().get(HOST);
+            requestedHost = getRequestedHost(requestUri, hostHeaderValue);
+            if (requestedHost == null) {
+                //HTTP 1.1 spec requires that the client MUST specify either an absolute URI or the HOST header, and
+                //if they don't specify either, a 400 bad request must be sent:
+                sendError(ctx, HttpResponseStatus.BAD_REQUEST, null);
+                return;
+            }
+
+            VirtualHostConfig vhost = virtualHosts.get(requestedHost.getName());
+            if (vhost == null) {
+                //there is no vhost configured that matches the client's requested host - reject the request:
+                sendError(ctx, HttpResponseStatus.SERVICE_UNAVAILABLE, null);
+                return;
+            }
+
+            destinationHost = parseHost(vhost.getBalance().getMembers().iterator().next());
+
+            connectToDestination(ctx, destinationHost);
+        }
+    }
+
+    private void tunnelEstablished(ChannelHandlerContext ctx) throws Exception {
+        tunnelEstablished = true;
+        //immediately process any buffered request chunks:
+        processQueuedMessages(ctx);
+    }
+
+    private void processQueuedMessages(ChannelHandlerContext ctx) throws Exception {
+        HttpObject msg;
+        while((msg = messageQueue.poll()) != null) {
+            onTunnelMessage(ctx, msg);
+        }
+    }
+
+    private void onTunnelMessage(final ChannelHandlerContext ctx, Object msg) throws Exception {
+
+        Object outboundMsg = msg;
+
+        ensureBuf(ctx);
+
+        if (msg instanceof HttpRequest) {
+
             //check to see if authc required:
-            String decodedPath = requestUri.getPath();
-
             boolean authcRequired = false;
-
+            String decodedPath = requestUri.getPath();
             for (String pattern : stormpathConfig.getAuthenticate()) {
                 if (pathMatcher.match(pattern, decodedPath)) {
                     authcRequired = true;
@@ -140,15 +218,12 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             buf.writeBytes(ascii(request.getProtocolVersion()));
             appendCrlf(buf);
 
-            String hostHeaderValue = null;
             String authzHeaderValue = null;
-
             boolean xForwardedForSet = false;
             boolean xForwardedHostSet = false;
 
-            //HTTP Proxies (like this gateway) replace the HOST header value with the target (origin) server, and
-            //retain the originally-requested host in the 'X-Forwarded-Host' header.
-            writeHeader(buf, HOST.toString(), originHost.toString());
+            // TODO: enable lb member selection algorithm:
+            writeHeader(buf, HOST.toString(), toHttpHostString(destinationHost));
 
             HttpHeaders headers = request.headers();
 
@@ -159,19 +234,18 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                     String headerName = header.getKey();
                     String headerValue = header.getValue();
 
+                    if (headerName.equalsIgnoreCase("X-Forwarded-Host")) {
+                        xForwardedHostSet = true; //an upstream proxy/gateway already set it
+                    }
+
                     if (headerName.equalsIgnoreCase("X-Forwarded-For")) {
                         headerValue += ", " + getHost(ctx.channel().remoteAddress()).getName();
                         xForwardedForSet = true;
                     }
 
-                    if (headerName.equalsIgnoreCase("X-Forwarded-Host")) {
-                        xForwardedHostSet = true; //an upstream proxy/gateway already set it
-                    }
-
                     if (headerName.equalsIgnoreCase(HOST.toString())) {
-                        hostHeaderValue = headerValue;
-                        //we already wrote this header (above, before iterating), so skip writing this specific header,
-                        //but retain the value so we can use it to set the X-Forwarded-Host later
+                        //we already captured this header (above, before iterating), so skip writing this specific
+                        //header, but retain the value so we can use it to set the X-Forwarded-Host header later
                         continue;
                     }
 
@@ -184,39 +258,18 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                 }
             }
 
-            if (!xForwardedForSet) {
-                writeHeader(buf, "X-Forwarded-For", getHost(ctx.channel().remoteAddress()).getName());
+            if (!xForwardedHostSet) {
+                String headerValue = toHttpHostString(requestedHost);
+                writeHeader(buf, "X-Forwarded-Host", headerValue);
             }
 
-            if (!xForwardedHostSet) {
-                String value = hostHeaderValue;
-
-                if (requestUri.isAbsolute()) {
-                    //If the requestUri is absolute, the HTTP server MUST ignore any Host header and use
-                    //the host in the requestUri: http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2
-                    value = requestUri.getHost();
-                    if (requestUri.getPort() > 0) {
-                      value += ":" + requestUri.getPort();
-                    }
-                } else if (hostHeaderValue == null) {
-                    //HTTP 1.1 spec requires that the client MUST specify either an absolute URI or the HOST header, and
-                    //if they don't specify either, a 400 bad request must be sent:
-                    sendError(ctx, HttpResponseStatus.BAD_REQUEST, null);
-                    return;
-                }
-
-                //all is well, set the value as required:
-                writeHeader(buf, "X-Forwarded-Host", value);
+            if (!xForwardedForSet) {
+                writeHeader(buf, "X-Forwarded-For", getHost(ctx.channel().remoteAddress()).getName());
             }
 
             boolean writeAuthzHeader = authzHeaderValue != null;
 
             if (authcRequired) {
-
-                if (authzHeaderValue == null) {
-                    sendBasicAuthcChallenge(ctx);
-                    return;
-                }
 
                 if (authzHeaderValue != null && authzHeaderValue.toLowerCase().trim().startsWith("basic ")) {
 
@@ -254,14 +307,14 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                         return;
                     }
                 } else {
-
+                    sendBasicAuthcChallenge(ctx);
+                    return;
                 }
             }
 
             if (writeAuthzHeader) {
                 writeHeader(buf, AUTHORIZATION, authzHeaderValue);
             }
-
 
             appendCrlf(buf);
 
@@ -284,36 +337,62 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                         // was able to flush out data, start to read the next chunk
                         ctx.channel().read();
                     } else {
-                        future.channel().close();
+                        future.channel().close(); //not successful - close the outbound channel;
                     }
                 }
             });
         }
     }
 
+    private static String toHttpHostString(Host host) {
+        String s = host.getName();
+        if (host.getPort() != 80) {
+            s += ":" + host.getPort();
+        }
+        return s;
+    }
+
+    private static Host getRequestedHost(URI requestUri, String hostHeaderValue) {
+
+        if (requestUri.isAbsolute()) {
+            //If the requestUri is absolute, the HTTP server MUST ignore any Host header and use
+            //the host in the requestUri: http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2
+            int port = requestUri.getPort();
+            if (port <= 0) {
+                port = 80;
+            }
+            return new Host(requestUri.getHost(), port);
+        }
+
+        return parseHost(hostHeaderValue);
+    }
+
+    private static Host parseHost(String hostString) {
+        if (hostString == null) {
+            return null;
+        }
+
+        String hostName = hostString;
+        int port = 80;
+        int i = hostString.lastIndexOf(':');
+        if (i >= 0) {
+            hostName = hostString.substring(0, i);
+            String portString = hostString.substring(i + 1);
+            port = Integer.parseInt(portString);
+        }
+        return new Host(hostName, port);
+    }
 
     private static Host getHost(SocketAddress addr) {
 
-        String host;
-        int port = 0;
-
         if (addr instanceof InetSocketAddress) {
             InetSocketAddress inetAddr = (InetSocketAddress) addr;
-            host = inetAddr.getHostString();
-            port = inetAddr.getPort();
-        } else {
-            host = addr.toString();
-            int index = host.lastIndexOf(':');
-            if (index > 0) {
-                host = host.substring(0, index);
-                if (index < (host.length() - 1)) {
-                    String portString = host.substring(index + 1);
-                    port = Integer.parseInt(portString);
-                }
-            }
+            String host = inetAddr.getHostString();
+            int port = inetAddr.getPort();
+            return new Host(host, port);
         }
 
-        return new Host(host, port);
+        return parseHost(addr.toString());
     }
 
     private static void writeHeader(ByteBuf buf, CharSequence headerName, Object headerValue) {
@@ -405,5 +484,4 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
         }
     }
-
 }

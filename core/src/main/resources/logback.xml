@@ -16,6 +16,6 @@
         <appender-ref ref="logbackAppender"/>
     </root>
 
-    <logger name="com.stormpath.monban" level="DEBUG"/>
+    <logger name="com.stormpath.monban" level="TRACE"/>
 
 </configuration>

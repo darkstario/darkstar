@@ -32,7 +32,7 @@ public class Monban {
 
         final int localPort = appCtx.getBean("localPort", Integer.class);
 
-        log.info("Proxying *: {} to {}...", localPort, appCtx.getBean("originHost"));
+        log.info("Listening on port {}...", localPort);
 
         // Configure the bootstrap.
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
