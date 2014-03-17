@@ -42,8 +42,8 @@ public class MonbanConfig {
     }
 
     @Bean
-    public int localPort() {
-        return JSON_CONFIG.getListen().getPort();
+    public Host defaultHost() {
+        return new Host(JSON_CONFIG.getHost(), JSON_CONFIG.getPort());
     }
 
     @Bean(destroyMethod = "shutdown")

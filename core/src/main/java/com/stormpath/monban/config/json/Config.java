@@ -5,22 +5,30 @@ import java.util.List;
 public class Config {
 
     private String name;
-    private String description;
-    private ListenConfig listen;
+    private String host;
+    private int port;
+    private SslConfig ssl;
     private List<VirtualHostConfig> vhosts;
 
-    public Config(){}
+    public Config() {
+        host = "0.0.0.0"; //bind any/all addresses by default
+        port = 80;
+    }
 
     public String getName() {
         return name;
     }
 
-    public String getDescription() {
-        return description;
+    public String getHost() {
+        return host;
     }
 
-    public ListenConfig getListen() {
-        return listen;
+    public int getPort() {
+        return port;
+    }
+
+    public SslConfig getSsl() {
+        return ssl;
     }
 
     public List<VirtualHostConfig> getVhosts() {

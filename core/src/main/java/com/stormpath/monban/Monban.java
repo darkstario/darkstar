@@ -1,6 +1,7 @@
 package com.stormpath.monban;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stormpath.monban.config.Host;
 import com.stormpath.monban.config.json.Config;
 import com.stormpath.monban.config.spring.MonbanConfig;
 import io.netty.bootstrap.ServerBootstrap;
@@ -30,9 +31,9 @@ public class Monban {
 
     public void run() throws Exception {
 
-        final int localPort = appCtx.getBean("localPort", Integer.class);
+        final Host host = appCtx.getBean("defaultHost", Host.class);
 
-        log.info("Listening on port {}...", localPort);
+        log.info("Listening on {}...", host);
 
         // Configure the bootstrap.
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
@@ -44,7 +45,7 @@ public class Monban {
                     .channel(NioServerSocketChannel.class)
                     .childHandler(appCtx.getBean(MonbanInitializer.class))
                     .childOption(ChannelOption.AUTO_READ, false)
-                    .bind(localPort).sync().channel().closeFuture().sync();
+                    .bind(host.getName(), host.getPort()).sync().channel().closeFuture().sync();
         } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();

@@ -1,9 +1,10 @@
 {
   "name": "monban.io",
-  "listen": {
-    "iface": "0.0.0.0",
-    "port": 5000,
-    "sslPort": 8443
+  "port": 5000,
+  "ssl": {
+    "port": 8443,
+    "certificateFile": "/usr/local/ssl/cert/whatever.crt",
+    "certificateKeyFile": "/usr/local/ssl/key/whatever.key"
   },
   "vhosts": [
     {
