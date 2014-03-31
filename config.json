@@ -1,15 +1,19 @@
 {
-  "name": "monban.io",
+  "name": "localhost",
   "port": 5000,
-  "ssl": {
+  "tls": {
     "port": 8443,
-    "certificateFile": "/usr/local/ssl/cert/whatever.crt",
-    "certificateKeyFile": "/usr/local/ssl/key/whatever.key"
+    "cert": "core/src/test/resources/example.com.pem.crt",
+    "key": "core/src/test/resources/example.com.pem.key"
   },
   "vhosts": [
     {
-      "name": "localhost",
-      "description": "domain.com web app.",
+      "name": "vhost.com",
+      "description": "an awesome web app.",
+      "tls": {
+        "cert": "core/src/test/resources/vhost.com.pem.crt",
+        "key": "core/src/test/resources/vhost.com.pem.key"
+      },
       "log": {
         "access": "/var/log/monban/domain.com/access.log",
         "error": "/var/log/monban/domain.com/error.log"

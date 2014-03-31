@@ -1,27 +1,30 @@
-package com.stormpath.monban;
+package com.stormpath.monban.tls;
 
-import io.netty.channel.ChannelInitializer;
+import com.stormpath.monban.FrontendHttpHandler;
+import com.stormpath.monban.MonbanInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.ssl.SslHandler;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+
 @Component
-public class MonbanInitializer extends ChannelInitializer<SocketChannel> {
+public class TlsInitializer extends MonbanInitializer {
 
     @Autowired
-    protected ApplicationContext appCtx;
+    private SSLContext sslContext;
 
     @Override
     public void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline p = ch.pipeline();
 
-        // Uncomment the following line if you want HTTPS
-        //SSLEngine engine = SecureChatSslContextFactory.getServerContext().createSSLEngine();
-        //engine.setUseClientMode(false);
-        //p.addLast("ssl", new SslHandler(engine));
+        SSLEngine engine = sslContext.createSSLEngine();
+        engine.setUseClientMode(false);
+        p.addLast("ssl", new SslHandler(engine));
 
         //p.addLast("logger", new LoggingHandler(LogLevel.INFO));
         p.addLast("httpRequestDecoder", new HttpRequestDecoder());

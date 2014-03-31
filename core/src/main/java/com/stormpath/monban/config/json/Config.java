@@ -7,7 +7,7 @@ public class Config {
     private String name;
     private String host;
     private int port;
-    private SslConfig ssl;
+    private TlsConfig tls;
     private List<VirtualHostConfig> vhosts;
 
     public Config() {
@@ -27,8 +27,8 @@ public class Config {
         return port;
     }
 
-    public SslConfig getSsl() {
-        return ssl;
+    public TlsConfig getTls() {
+        return tls;
     }
 
     public List<VirtualHostConfig> getVhosts() {

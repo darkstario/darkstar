@@ -3,7 +3,9 @@ package com.stormpath.monban;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stormpath.monban.config.Host;
 import com.stormpath.monban.config.json.Config;
+import com.stormpath.monban.config.json.TlsConfig;
 import com.stormpath.monban.config.spring.MonbanConfig;
+import com.stormpath.monban.tls.TlsInitializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -33,19 +35,35 @@ public class Monban {
 
         final Host host = appCtx.getBean("defaultHost", Host.class);
 
+        final Config jsonConfig = appCtx.getBean("jsonConfig", Config.class);
+
         log.info("Listening on {}...", host);
 
         // Configure the bootstrap.
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
+
+            TlsConfig tls = jsonConfig.getTls();
+            if (tls != null) {
+                ServerBootstrap ssl = new ServerBootstrap();
+                ssl.option(ChannelOption.SO_BACKLOG, 1024);
+                ssl.group(bossGroup, workerGroup)
+                        .channel(NioServerSocketChannel.class)
+                        .childHandler(appCtx.getBean("tlsInitializer", TlsInitializer.class))
+                        .childOption(ChannelOption.AUTO_READ, false)
+                        .bind(host.getName(), tls.getPort());
+            }
+
             ServerBootstrap b = new ServerBootstrap();
             b.option(ChannelOption.SO_BACKLOG, 1024);
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
-                    .childHandler(appCtx.getBean(MonbanInitializer.class))
+                    .childHandler(appCtx.getBean("monbanInitializer", MonbanInitializer.class))
                     .childOption(ChannelOption.AUTO_READ, false)
-                    .bind(host.getName(), host.getPort()).sync().channel().closeFuture().sync();
+                    .bind(host.getName(), host.getPort())
+                    .sync().channel().closeFuture().sync();
+
         } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();

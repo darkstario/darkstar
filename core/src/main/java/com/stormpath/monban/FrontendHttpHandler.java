@@ -73,11 +73,13 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
     private AntPathMatcher pathMatcher;
 
-    private HttpRequest request;
-    private URI requestUri;
-    private Host requestedHost;
-    private Host destinationHost;
+    private HttpRequest request; //initial request fragment (content will come as additional messages)
+    private URI requestUri; //request URI
+    private Host requestedHost; //Host specified in the request
+    private Host destinationHost; //Actual host that we connect to based on load balancing rules
 
+    //queue inbound request fragments until a connection with the backend (a tunnel) is established
+    //Once established, we relay the queued messages
     private Queue<HttpObject> messageQueue;
 
     private ByteBuf buf;
@@ -145,6 +147,10 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             return;
         }
 
+        //otherwise, the tunnel is not yet established, so we need to read the request headers to
+        //choose a backend host to establish it.  Once established, any queued messages will be sent to the
+        //backend host
+
         if (msg instanceof HttpRequest) {
             HttpRequest request = (HttpRequest)msg;
             try {
@@ -172,10 +178,14 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                 return;
             }
 
+            //TODO determine destinationHost based on a load balancing algorithm
             destinationHost = parseHost(vhost.getBalance().getMembers().iterator().next());
 
             connectToDestination(ctx, destinationHost);
         }
+
+        //else the message is a fragment/chunk after the initial HttpRequest fragment.  This fragment is already
+        //queued above, so just return - it will be processed when the tunnel is established.
     }
 
     private void tunnelEstablished(ChannelHandlerContext ctx) throws Exception {
@@ -186,6 +196,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
     private void processQueuedMessages(ChannelHandlerContext ctx) throws Exception {
         HttpObject msg;
+
         while((msg = messageQueue.poll()) != null) {
             onTunnelMessage(ctx, msg);
         }
@@ -221,7 +232,6 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             boolean xForwardedForSet = false;
             boolean xForwardedHostSet = false;
 
-            // TODO: enable lb member selection algorithm:
             writeHeader(buf, HOST.toString(), toHttpHostString(destinationHost));
 
             HttpHeaders headers = request.headers();

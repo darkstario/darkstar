@@ -55,6 +55,7 @@
         <clover.database>${user.home}/.stormpath/monban/clover/database/clover.db</clover.database>
         <maven.clover.licenseLocation>${user.home}/.stormpath/clover/clover.license</maven.clover.licenseLocation>
 
+        <bouncycastle.version>1.50</bouncycastle.version>
         <failsafe.plugin.version>2.12.4</failsafe.plugin.version>
         <groovy.version>1.8.5</groovy.version>
         <guava.version>14.0-rc3</guava.version>
@@ -129,6 +130,18 @@
                 <artifactId>shiro-core</artifactId>
                 <version>${shiro.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk15on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk15on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+
             <!--
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>

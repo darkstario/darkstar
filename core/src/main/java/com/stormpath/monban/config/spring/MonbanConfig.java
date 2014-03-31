@@ -3,29 +3,38 @@ package com.stormpath.monban.config.spring;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
-import com.stormpath.monban.FrontendHttpHandler;
-import com.stormpath.monban.MonbanInitializer;
 import com.stormpath.monban.config.DefaultHostFactory;
 import com.stormpath.monban.config.Host;
 import com.stormpath.monban.config.HostFactory;
 import com.stormpath.monban.config.json.Config;
 import com.stormpath.monban.config.json.StormpathConfig;
+import com.stormpath.monban.config.json.TlsConfig;
 import com.stormpath.monban.config.json.VirtualHostConfig;
 import com.stormpath.monban.ducksboard.DucksboardPoster;
+import com.stormpath.monban.tls.BouncyCastleKeyEntryFactory;
+import com.stormpath.monban.tls.KeyEntry;
+import com.stormpath.monban.tls.KeyEntryFactory;
+import com.stormpath.monban.tls.SniKeyManager;
 import com.stormpath.sdk.application.Application;
 import com.stormpath.sdk.cache.Caches;
 import com.stormpath.sdk.client.Client;
 import com.stormpath.sdk.client.ClientBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.client.RestTemplate;
 
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.X509ExtendedKeyManager;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -130,11 +139,15 @@ public class MonbanConfig {
         return new FrontendHttpHandler();
     }*/
 
-    @Bean(name="virtualHosts")
-    public Map<String,VirtualHostConfig> virtualHosts() {
+    @Bean(name = "virtualHosts")
+    public Map<String, VirtualHostConfig> virtualHosts() throws Exception {
+
+        //just trigger the logic to test:
+        //keyStore();
+
         List<VirtualHostConfig> configs = JSON_CONFIG.getVhosts();
-        Map<String,VirtualHostConfig> vhosts = new LinkedHashMap<>(configs.size());
-        for( VirtualHostConfig config : configs) {
+        Map<String, VirtualHostConfig> vhosts = new LinkedHashMap<>(configs.size());
+        for (VirtualHostConfig config : configs) {
             vhosts.put(config.getName().toLowerCase(), config);
         }
 
@@ -143,6 +156,84 @@ public class MonbanConfig {
 
     public VirtualHostConfig vhostConfig() {
         return JSON_CONFIG.getVhosts().iterator().next();
+    }
+
+    @Bean
+    public KeyEntryFactory keyEntryFactory() {
+        return new BouncyCastleKeyEntryFactory();
+    }
+
+    @Bean
+    public KeyStore keyStore() throws Exception {
+
+        String name = jsonConfig().getName();
+
+        Random r = new SecureRandom();
+        byte[] bytes = new byte[32];
+        r.nextBytes(bytes);
+        byte[] base64Encoded = Base64.getEncoder().encode(bytes);
+        char[] randomPassword = new char[base64Encoded.length];
+        for (int i = base64Encoded.length; i-- > 0;) {
+            randomPassword[i] = (char)(base64Encoded[i] & 0xff);
+        }
+
+        char[] password = "changeit".toCharArray();
+        KeyStore ks = KeyStore.getInstance("JKS");
+        ks.load(null);
+
+        KeyEntryFactory keyEntryFactory = keyEntryFactory();
+
+        //now load the keystore w/ the keys referenced in configuration:
+
+        //first, load the system-wide default:
+        TlsConfig tlsConfig = jsonConfig().getTls();
+        if (tlsConfig != null) {
+            KeyEntry keyEntry = keyEntryFactory.createKeyEntry(name, tlsConfig);
+            ks.setKeyEntry(name, keyEntry.getPrivateKey(), password, keyEntry.getCertificateChain());
+        }
+
+        //then load vhosts:
+        Map<String,VirtualHostConfig> vhosts = virtualHosts();
+        for(Map.Entry<String,VirtualHostConfig> entry : vhosts.entrySet()) {
+            VirtualHostConfig vhost = entry.getValue();
+            tlsConfig = vhost.getTls();
+            if (tlsConfig != null) {
+                String vhostName = vhost.getName();
+                KeyEntry keyEntry = keyEntryFactory.createKeyEntry(vhostName, tlsConfig);
+                ks.setKeyEntry(vhostName, keyEntry.getPrivateKey(), password, keyEntry.getCertificateChain());
+            }
+        }
+
+        return ks;
+    }
+
+    @Bean
+    public SSLContext sslContext() throws Exception {
+
+        KeyStore keyStore = keyStore();
+
+        KeyManagerFactory factory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        factory.init(keyStore, "changeit".toCharArray());
+
+        // Javadoc of SSLContext.init() states the first KeyManager implementing X509ExtendedKeyManager in the array is
+        // used. We duplicate this behaviour when picking the KeyManager to wrap around.
+        X509ExtendedKeyManager x509KeyManager = null;
+        for (KeyManager keyManager : factory.getKeyManagers()) {
+            if (keyManager instanceof X509ExtendedKeyManager) {
+                x509KeyManager = (X509ExtendedKeyManager) keyManager;
+            }
+        }
+
+        if (x509KeyManager == null) {
+            throw new Exception("KeyManagerFactory did not create an X509ExtendedKeyManager");
+        }
+
+        SniKeyManager sniKeyManager = new SniKeyManager(x509KeyManager);
+
+        SSLContext context = SSLContext.getInstance("TLS");
+        context.init(new KeyManager[]{sniKeyManager}, null, null);
+
+        return context;
     }
 
     private static String applyUserHome(String path) {

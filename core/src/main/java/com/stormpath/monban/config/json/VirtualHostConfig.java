@@ -4,6 +4,7 @@ public class VirtualHostConfig {
 
     private String name;
     private String description;
+    private TlsConfig tls;
     private LogConfig log;
     private BalanceConfig balance;
     private StormpathConfig stormpath;
@@ -18,6 +19,10 @@ public class VirtualHostConfig {
 
     public String getDescription() {
         return description;
+    }
+
+    public TlsConfig getTls() {
+        return tls;
     }
 
     public LogConfig getLog() {
