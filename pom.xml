@@ -9,7 +9,7 @@
 
     <parent>
         <groupId>com.stormpath.poms</groupId>
-        <artifactId>groovy-pom</artifactId>
+        <artifactId>java-pom</artifactId>
         <version>1</version>
     </parent>
 
@@ -68,7 +68,7 @@
         <slf4j.version>1.7.6</slf4j.version>
         <sonar.plugin.version>2.0</sonar.plugin.version>
         <spring.version>4.0.2.RELEASE</spring.version>
-        <stormpath.sdk.version>0.9.3-SNAPSHOT</stormpath.sdk.version>
+        <stormpath.sdk.version>1.0.alpha-SNAPSHOT</stormpath.sdk.version>
         <metrics.version>3.0.1</metrics.version>
     </properties>
 
