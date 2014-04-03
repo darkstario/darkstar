@@ -7,6 +7,7 @@ import com.stormpath.monban.config.json.TlsConfig;
 import com.stormpath.monban.config.spring.MonbanConfig;
 import com.stormpath.monban.tls.TlsInitializer;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -22,8 +23,10 @@ public class Monban {
     private static final Logger log = LoggerFactory.getLogger(Monban.class);
 
     private final AnnotationConfigApplicationContext appCtx;
+    private final long startMillis;
 
-    public Monban(Config config) {
+    private Monban(long startMillis, Config config) {
+        this.startMillis = startMillis;
         MonbanConfig.JSON_CONFIG = config;
         appCtx = new AnnotationConfigApplicationContext();
         appCtx.registerShutdownHook();
@@ -36,8 +39,6 @@ public class Monban {
         final Host host = appCtx.getBean("defaultHost", Host.class);
 
         final Config jsonConfig = appCtx.getBean("jsonConfig", Config.class);
-
-        log.info("Listening on {}...", host);
 
         // Configure the bootstrap.
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
@@ -57,12 +58,17 @@ public class Monban {
 
             ServerBootstrap b = new ServerBootstrap();
             b.option(ChannelOption.SO_BACKLOG, 1024);
-            b.group(bossGroup, workerGroup)
+            ChannelFuture f = b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .childHandler(appCtx.getBean("monbanInitializer", MonbanInitializer.class))
                     .childOption(ChannelOption.AUTO_READ, false)
-                    .bind(host.getName(), host.getPort())
-                    .sync().channel().closeFuture().sync();
+                    .bind(host.getName(), host.getPort());
+
+            long duration = System.currentTimeMillis() - this.startMillis;
+
+            log.info("Started in {} ms. Listening on {}...", duration, host);
+
+            f.sync().channel().closeFuture().sync();
 
         } finally {
             bossGroup.shutdownGracefully();
@@ -72,6 +78,8 @@ public class Monban {
     }
 
     public static void main(String[] args) throws Exception {
+
+        long startupMillis = System.currentTimeMillis();
 
         String configFilePath;
 
@@ -94,7 +102,7 @@ public class Monban {
         Config config = objectMapper.readValue(configFile, Config.class);
 
         try {
-            new Monban(config).run();
+            new Monban(startupMillis, config).run();
         } catch (Exception e) {
             e.printStackTrace(System.err);
             System.exit(-1);

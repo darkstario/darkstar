@@ -9,7 +9,7 @@
 
     <appender name="logbackAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} %-5level [%thread] %logger{36} %m%n</pattern>
+            <pattern>%d{"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",UTC} %-5level %m%n</pattern>
         </encoder>
     </appender>
     <root level="WARN">

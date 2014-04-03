@@ -1,5 +1,7 @@
 package com.stormpath.monban.config.spring;
 
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.core.FileAppender;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
@@ -18,7 +20,15 @@ import com.stormpath.monban.tls.SniKeyManager;
 import com.stormpath.sdk.application.Application;
 import com.stormpath.sdk.cache.Caches;
 import com.stormpath.sdk.client.Client;
-import com.stormpath.sdk.client.ClientBuilder;
+import com.stormpath.sdk.client.Clients;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.MutablePropertyValues;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -41,9 +51,70 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
-public class MonbanConfig {
+public class MonbanConfig implements BeanDefinitionRegistryPostProcessor {
 
     public static Config JSON_CONFIG;
+
+    @Override
+    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+
+        Map<String,String> logFormats = JSON_CONFIG.getLogFormat();
+        for(Map.Entry<String,String> entry : logFormats.entrySet()) {
+            String name = entry.getKey();
+            String patternString = entry.getValue();
+
+            GenericBeanDefinition def = new GenericBeanDefinition();
+            def.setBeanClass(PatternLayoutEncoder.class);
+            def.setInitMethodName("start");
+            def.setDestroyMethodName("stop");
+            def.setPropertyValues(new MutablePropertyValues()
+                    .add("context", LoggerFactory.getILoggerFactory())
+                    .add("pattern", patternString)
+            );
+
+            String beanName = name + "LogFormat" + PatternLayoutEncoder.class.getSimpleName();
+            registry.registerBeanDefinition(beanName, def);
+        }
+
+        Map<String,VirtualHostConfig> vhosts = virtualHosts();
+
+        for(VirtualHostConfig vhost : vhosts.values()) {
+
+            String vhostName = vhost.getName();
+
+            Map<String,Object> vhostLogs = vhost.getLog();
+
+            for(Map.Entry<String,Object> log : vhostLogs.entrySet()) {
+                String name = log.getKey();
+                Object value = log.getValue();
+
+                if (value instanceof String) {
+                    String path = (String)value;
+
+                    String encoderBeanName = name + "LogFormat" + PatternLayoutEncoder.class.getSimpleName();
+
+                    GenericBeanDefinition def = new GenericBeanDefinition();
+                    def.setBeanClass(FileAppender.class);
+                    def.setInitMethodName("start");
+                    def.setDestroyMethodName("stop");
+                    def.setPropertyValues(new MutablePropertyValues()
+                            .add("context", LoggerFactory.getILoggerFactory())
+                            .add("file", path)
+                            .add("encoder", new RuntimeBeanReference(encoderBeanName))
+                    );
+
+                    String beanName = vhostName + name + "log";
+
+                    registry.registerBeanDefinition(beanName, def);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+        //no-op
+    }
 
     @Bean
     public Config jsonConfig() {
@@ -114,7 +185,7 @@ public class MonbanConfig {
         StormpathConfig stormpath = stormpathConfig();
         String apiKeyFilePath = stormpath.getApiKeyFile();
         apiKeyFilePath = applyUserHome(apiKeyFilePath);
-        return new ClientBuilder()
+        return Clients.builder()
                 .setApiKeyFileLocation(apiKeyFilePath)
                 .setCacheManager(Caches.newCacheManager()
                         .withCache(Caches.forResource(Application.class)
@@ -140,11 +211,7 @@ public class MonbanConfig {
     }*/
 
     @Bean(name = "virtualHosts")
-    public Map<String, VirtualHostConfig> virtualHosts() throws Exception {
-
-        //just trigger the logic to test:
-        //keyStore();
-
+    public Map<String, VirtualHostConfig> virtualHosts() {
         List<VirtualHostConfig> configs = JSON_CONFIG.getVhosts();
         Map<String, VirtualHostConfig> vhosts = new LinkedHashMap<>(configs.size());
         for (VirtualHostConfig config : configs) {

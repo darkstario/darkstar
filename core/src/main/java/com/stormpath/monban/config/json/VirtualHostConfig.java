@@ -1,11 +1,13 @@
 package com.stormpath.monban.config.json;
 
+import java.util.Map;
+
 public class VirtualHostConfig {
 
     private String name;
     private String description;
     private TlsConfig tls;
-    private LogConfig log;
+    private Map<String,Object> log;
     private BalanceConfig balance;
     private StormpathConfig stormpath;
     private DucksboardConfig ducksboard;
@@ -25,7 +27,7 @@ public class VirtualHostConfig {
         return tls;
     }
 
-    public LogConfig getLog() {
+    public Map<String, Object> getLog() {
         return log;
     }
 

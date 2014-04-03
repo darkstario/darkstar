@@ -1,6 +1,7 @@
 package com.stormpath.monban.config.json;
 
 import java.util.List;
+import java.util.Map;
 
 public class Config {
 
@@ -9,6 +10,7 @@ public class Config {
     private int port;
     private TlsConfig tls;
     private List<VirtualHostConfig> vhosts;
+    private Map<String,String> logFormat;
 
     public Config() {
         host = "0.0.0.0"; //bind any/all addresses by default
@@ -33,5 +35,9 @@ public class Config {
 
     public List<VirtualHostConfig> getVhosts() {
         return vhosts;
+    }
+
+    public Map<String, String> getLogFormat() {
+        return logFormat;
     }
 }

@@ -6,6 +6,10 @@
     "cert": "core/src/test/resources/example.com.pem.crt",
     "key": "core/src/test/resources/example.com.pem.key"
   },
+  "logFormat": {
+    "access": "%date %-5level [%thread] %logger{36} %m%n",
+    "error": "%date %-5level [%thread] %logger{36} %m%n"
+  },
   "vhosts": [
     {
       "name": "vhost.com",
@@ -15,8 +19,12 @@
         "key": "core/src/test/resources/vhost.com.pem.key"
       },
       "log": {
-        "access": "/var/log/monban/domain.com/access.log",
-        "error": "/var/log/monban/domain.com/error.log"
+        "access": "target/logs/vhosts/vhost.com/access.log",
+        "error": "target/logs/vhosts/vhost.com/error.log",
+        "complex": {
+          "path": "target/logs/vhosts/vhosts.com/foo.log",
+          "format": "access"
+        }
       },
       "balance": {
         "members": ["localhost:8080"]
