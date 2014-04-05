@@ -1,0 +1,47 @@
+{
+  "name": "localhost",
+  "port": 5000,
+  "tls": {
+    "port": 8443,
+    "cert": "core/src/test/resources/example.com.pem.crt",
+    "key": "core/src/test/resources/example.com.pem.key"
+  },
+  "logFormat": {
+    "access": "%date %-5level [%thread] %logger{36} %m%n",
+    "error": "%date %-5level [%thread] %logger{36} %m%n"
+  },
+  "vhosts": [
+    {
+      "name": "vhost.com",
+      "description": "an awesome web app.",
+      "tls": {
+        "cert": "core/src/test/resources/vhost.com.pem.crt",
+        "key": "core/src/test/resources/vhost.com.pem.key"
+      },
+      "log": {
+        "access": "target/logs/vhosts/vhost.com/access.log",
+        "error": "target/logs/vhosts/vhost.com/error.log",
+        "complex": {
+          "path": "target/logs/vhosts/vhosts.com/foo.log",
+          "format": "access"
+        }
+      },
+      "balance": {
+        "members": ["localhost:8080"]
+      },
+      "stormpath": {
+        "apiKeyFile": "${user.home}/.stormpath/apiKey.properties",
+        "applicationHref": "https://api.stormpath.com/v1/applications/5ZgKzTewe54yoXwAc4ROPD",
+        "authenticate": [
+          "/show-all-headers.php"
+        ]
+      },
+      "ducksboard": {
+        "apiKey": "1vO8XZ2yqnVikqmaP7p6CJMi8jKMtvAd4f7COMM0diVmle2RTV"
+      },
+      "datadog": {
+        "apiKey": "d65413e484e19cdb681f19e3d5d16865"
+      }
+    }
+  ]
+}

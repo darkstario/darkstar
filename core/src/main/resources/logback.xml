@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+
+    <!--  http://logback.qos.ch/manual/configuration.html#LevelChangePropagator  -->
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+        <resetJUL>true</resetJUL>
+    </contextListener>
+
+    <appender name="logbackAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",UTC} %-5level %m%n</pattern>
+        </encoder>
+    </appender>
+    <root level="WARN">
+        <appender-ref ref="logbackAppender"/>
+    </root>
+
+    <logger name="io.darkstar" level="TRACE"/>
+
+</configuration>
