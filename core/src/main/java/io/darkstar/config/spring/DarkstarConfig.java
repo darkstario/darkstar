@@ -128,7 +128,7 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         return new Host(JSON_CONFIG.getHost(), JSON_CONFIG.getPort());
     }
 
-    @Bean
+    @Bean(destroyMethod = "shutdown")
     public Environment reactorEnvironment() {
         return new Environment();
     }
