@@ -2,14 +2,13 @@ package io.darkstar;
 
 import com.google.common.base.Charsets;
 import com.google.common.eventbus.EventBus;
-import io.darkstar.config.Host;
-import io.darkstar.config.json.StormpathConfig;
-import io.darkstar.config.json.VirtualHostConfig;
-import io.darkstar.event.RequestEvent;
 import com.stormpath.sdk.application.Application;
 import com.stormpath.sdk.authc.AuthenticationResult;
 import com.stormpath.sdk.authc.UsernamePasswordRequest;
 import com.stormpath.sdk.resource.ResourceException;
+import io.darkstar.config.Host;
+import io.darkstar.config.json.StormpathConfig;
+import io.darkstar.config.json.VirtualHostConfig;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -19,6 +18,10 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
@@ -73,7 +76,6 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
     private AntPathMatcher pathMatcher;
 
-    private HttpRequest request; //initial request fragment (content will come as additional messages)
     private URI requestUri; //request URI
     private Host requestedHost; //Host specified in the request
     private Host destinationHost; //Actual host that we connect to based on load balancing rules
@@ -82,17 +84,9 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
     //Once established, we relay the queued messages
     private Queue<HttpObject> messageQueue;
 
-    private ByteBuf buf;
-
     public FrontendHttpHandler() {
         this.pathMatcher = new AntPathMatcher();
         this.messageQueue = new ConcurrentLinkedQueue<>();
-    }
-
-    protected void ensureBuf(ChannelHandlerContext ctx) {
-        if (buf == null || buf.refCnt() == 0) {
-            buf = ctx.alloc().buffer(8 * 1024);
-        }
     }
 
     @Override
@@ -110,7 +104,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop())
                 .channel(ctx.channel().getClass())
-                .handler(new BackendHandler(inboundChannel, this.eventBus))
+                .handler(new BackendInitializer(inboundChannel, this.eventBus))
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                 .option(ChannelOption.AUTO_READ, false);
 
@@ -139,7 +133,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         }
 
         //noinspection ConstantConditions
-        HttpObject httpObject = (HttpObject)msg;
+        HttpObject httpObject = (HttpObject) msg;
         messageQueue.add(httpObject);
 
         if (tunnelEstablished) {
@@ -152,7 +146,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         //backend host
 
         if (msg instanceof HttpRequest) {
-            HttpRequest request = (HttpRequest)msg;
+            HttpRequest request = (HttpRequest) msg;
             try {
                 requestUri = new URI(request.getUri());
             } catch (URISyntaxException e) {
@@ -197,7 +191,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
     private void processQueuedMessages(ChannelHandlerContext ctx) throws Exception {
         HttpObject msg;
 
-        while((msg = messageQueue.poll()) != null) {
+        while ((msg = messageQueue.poll()) != null) {
             onTunnelMessage(ctx, msg);
         }
     }
@@ -206,10 +200,18 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
         Object outboundMsg = msg;
 
-        ensureBuf(ctx);
-
         if (msg instanceof HttpRequest) {
-            request = (HttpRequest)msg;
+
+            final HttpRequest originalRequest = (HttpRequest) msg;
+
+            HttpRequest modifiedRequest;
+            if (msg instanceof FullHttpRequest) {
+                modifiedRequest = ((FullHttpRequest) msg).duplicate();
+            } else {
+                modifiedRequest = new DefaultHttpRequest(originalRequest.getProtocolVersion(),
+                        originalRequest.getMethod(), originalRequest.getUri(), true);
+                modifiedRequest.headers().set(originalRequest.headers());
+            }
 
             //check to see if authc required:
             boolean authcRequired = false;
@@ -221,20 +223,13 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                 }
             }
 
-            buf.writeBytes(ascii(request.getMethod()));
-            buf.writeByte(SP);
-            buf.writeBytes(utf8(request.getUri()));
-            buf.writeByte(SP);
-            buf.writeBytes(ascii(request.getProtocolVersion()));
-            appendCrlf(buf);
-
             String authzHeaderValue = null;
             boolean xForwardedForSet = false;
             boolean xForwardedHostSet = false;
 
-            writeHeader(buf, HOST.toString(), toHttpHostString(destinationHost));
+            modifiedRequest.headers().set(HOST, toHttpHostString(destinationHost));
 
-            HttpHeaders headers = request.headers();
+            HttpHeaders headers = originalRequest.headers();
 
             if (!headers.isEmpty()) {
 
@@ -263,17 +258,18 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                         continue; //don't write out this particular header - we'll do that in a minute
                     }
 
-                    writeHeader(buf, headerName, headerValue);
+                    modifiedRequest.headers().set(headerName, headerValue);
                 }
             }
 
             if (!xForwardedHostSet) {
                 String headerValue = toHttpHostString(requestedHost);
-                writeHeader(buf, "X-Forwarded-Host", headerValue);
+                //
+                modifiedRequest.headers().set("X-Forwarded-Host", headerValue);
             }
 
             if (!xForwardedForSet) {
-                writeHeader(buf, "X-Forwarded-For", getHost(ctx.channel().remoteAddress()).getName());
+                modifiedRequest.headers().set("X-Forwarded-For", getHost(ctx.channel().remoteAddress()).getName());
             }
 
             boolean writeAuthzHeader = authzHeaderValue != null;
@@ -304,12 +300,13 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
                     String clientHost = getHost(ctx.channel().remoteAddress()).getName();
 
-                    UsernamePasswordRequest request = new UsernamePasswordRequest(username, password, clientHost);
+                    UsernamePasswordRequest authcRequest = new UsernamePasswordRequest(username, password, clientHost);
                     try {
-                        AuthenticationResult result = this.application.authenticateAccount(request);
+                        AuthenticationResult result = this.application.authenticateAccount(authcRequest);
                         //no exception - authenticated successfully, so allow the request to continue, and
                         //replace the authz header with the authenticated account href
-                        writeHeader(buf, "X-Forwarded-User", result.getAccount().getHref());
+
+                        modifiedRequest.headers().set("X-Forwarded-User", result.getAccount().getHref());
                         writeAuthzHeader = false;
                     } catch (ResourceException e) {
                         sendBasicAuthcChallenge(ctx);
@@ -322,15 +319,13 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             }
 
             if (writeAuthzHeader) {
-                writeHeader(buf, AUTHORIZATION, authzHeaderValue);
+                modifiedRequest.headers().set(AUTHORIZATION, authzHeaderValue);
             }
 
-            appendCrlf(buf);
+            outboundMsg = modifiedRequest;
 
-            outboundMsg = buf;
-
-            RequestEvent event = new RequestEvent(-1, buf.readableBytes());
-            this.eventBus.post(event);
+            //RequestEvent event = new RequestEvent(-1, buf.readableBytes());
+            //this.eventBus.post(event);
         }
 
         if (msg instanceof HttpContent) {
@@ -429,35 +424,26 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
     private static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status, /*HACK*/ String wwwAuthcValue) {
 
-        final ByteBuf responseBuf = ctx.alloc().buffer(512);
+        byte[] bodyBytes = ascii(status);
+        final ByteBuf body = ctx.alloc().buffer(bodyBytes.length);
+        body.writeBytes(bodyBytes);
 
-        //status line:
-        responseBuf.writeBytes(ascii(HTTP_1_1)).writeByte(SP).writeBytes(ascii(status));
-        appendCrlf(responseBuf);
-
+        final FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_0, status, body, true);
         //headers:
+        response.headers().set(CONTENT_TYPE, "text/plain; charset=UTF-8");
         //HACK:
-        if (status.equals(HttpResponseStatus.UNAUTHORIZED) && wwwAuthcValue != null) {
-            writeHeader(responseBuf, WWW_AUTHENTICATE, wwwAuthcValue);
+        if (wwwAuthcValue != null && status.equals(HttpResponseStatus.UNAUTHORIZED)) {
+            response.headers().set(WWW_AUTHENTICATE, wwwAuthcValue);
         }
 
-        writeHeader(responseBuf, CONTENT_TYPE, "text/plain; charset=UTF-8");
-
-        //body separator:
-        appendCrlf(responseBuf);
-
-        //body:
-        responseBuf.writeBytes(ascii(status));
-        appendCrlf(responseBuf);
-
         // Close the connection as soon as the error message is sent.
-        ctx.writeAndFlush(responseBuf).addListener(new ChannelFutureListener() {
+        ctx.writeAndFlush(response).addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 try {
                     future.channel().close();
                 } finally {
-                    release(responseBuf);
+                    release(body);
                 }
             }
         });
@@ -471,9 +457,6 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        release(buf);
-        buf = null;
-
         if (outboundChannel != null) {
             closeOnFlush(outboundChannel);
         }

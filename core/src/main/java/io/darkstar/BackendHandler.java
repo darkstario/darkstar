@@ -1,8 +1,6 @@
 package io.darkstar;
 
 import com.google.common.eventbus.EventBus;
-import io.darkstar.event.BytesEvent;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -28,15 +26,6 @@ public class BackendHandler extends ChannelHandlerAdapter {
 
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
-
-        if (msg instanceof ByteBuf) {
-            ByteBuf buf = (ByteBuf) msg;
-            int count = buf.readableBytes();
-            if (count > 0) {
-                BytesEvent event = new BytesEvent(count, false);
-                this.eventBus.post(event);
-            }
-        }
 
         inboundChannel.writeAndFlush(msg).addListener(new ChannelFutureListener() {
             @Override

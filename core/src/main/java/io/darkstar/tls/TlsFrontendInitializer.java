@@ -1,10 +1,8 @@
 package io.darkstar.tls;
 
-import io.darkstar.FrontendHttpHandler;
-import io.darkstar.DarkstarInitializer;
+import io.darkstar.FrontendInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.ssl.SslHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -13,7 +11,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
 @Component
-public class TlsInitializer extends DarkstarInitializer {
+public class TlsFrontendInitializer extends FrontendInitializer {
 
     @Autowired
     private SSLContext sslContext;
@@ -26,10 +24,6 @@ public class TlsInitializer extends DarkstarInitializer {
         engine.setUseClientMode(false);
         p.addLast("ssl", new SslHandler(engine));
 
-        //p.addLast("logger", new LoggingHandler(LogLevel.INFO));
-        p.addLast("httpRequestDecoder", new HttpRequestDecoder());
-
-        FrontendHttpHandler handler = appCtx.getBean(FrontendHttpHandler.class); //must be prototype scoped
-        p.addLast("frontendHandler", handler);
+        initPipeline(p);
     }
 }

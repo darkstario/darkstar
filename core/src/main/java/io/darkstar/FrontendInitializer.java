@@ -4,12 +4,13 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DarkstarInitializer extends ChannelInitializer<SocketChannel> {
+public class FrontendInitializer extends ChannelInitializer<SocketChannel> {
 
     @Autowired
     protected ApplicationContext appCtx;
@@ -17,14 +18,12 @@ public class DarkstarInitializer extends ChannelInitializer<SocketChannel> {
     @Override
     public void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline p = ch.pipeline();
+        initPipeline(p);
+    }
 
-        // Uncomment the following line if you want HTTPS
-        //SSLEngine engine = SecureChatSslContextFactory.getServerContext().createSSLEngine();
-        //engine.setUseClientMode(false);
-        //p.addLast("ssl", new SslHandler(engine));
-
-        //p.addLast("logger", new LoggingHandler(LogLevel.INFO));
-        p.addLast("httpRequestDecoder", new HttpRequestDecoder());
+    protected final void initPipeline(ChannelPipeline p) {
+        p.addLast("frontendHttpRequestDecoder", new HttpRequestDecoder());
+        p.addLast("frontendHttpResponseEncoder", new HttpResponseEncoder());
 
         FrontendHttpHandler handler = appCtx.getBean(FrontendHttpHandler.class); //must be prototype scoped
         p.addLast("frontendHandler", handler);

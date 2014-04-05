@@ -5,7 +5,7 @@ import io.darkstar.config.Host;
 import io.darkstar.config.json.Config;
 import io.darkstar.config.json.TlsConfig;
 import io.darkstar.config.spring.DarkstarConfig;
-import io.darkstar.tls.TlsInitializer;
+import io.darkstar.tls.TlsFrontendInitializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -51,7 +51,7 @@ public class Darkstar {
                 ssl.option(ChannelOption.SO_BACKLOG, 1024);
                 ssl.group(bossGroup, workerGroup)
                         .channel(NioServerSocketChannel.class)
-                        .childHandler(appCtx.getBean("tlsInitializer", TlsInitializer.class))
+                        .childHandler(appCtx.getBean("tlsFrontendInitializer", TlsFrontendInitializer.class))
                         .childOption(ChannelOption.AUTO_READ, false)
                         .bind(host.getName(), tls.getPort());
             }
@@ -60,7 +60,7 @@ public class Darkstar {
             b.option(ChannelOption.SO_BACKLOG, 1024);
             ChannelFuture f = b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
-                    .childHandler(appCtx.getBean("darkstarInitializer", DarkstarInitializer.class))
+                    .childHandler(appCtx.getBean("frontendInitializer", FrontendInitializer.class))
                     .childOption(ChannelOption.AUTO_READ, false)
                     .bind(host.getName(), host.getPort());
 
