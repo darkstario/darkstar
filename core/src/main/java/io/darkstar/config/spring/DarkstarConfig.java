@@ -5,6 +5,10 @@ import ch.qos.logback.core.FileAppender;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
+import com.stormpath.sdk.application.Application;
+import com.stormpath.sdk.cache.Caches;
+import com.stormpath.sdk.client.Client;
+import com.stormpath.sdk.client.Clients;
 import io.darkstar.config.DefaultHostFactory;
 import io.darkstar.config.Host;
 import io.darkstar.config.HostFactory;
@@ -12,15 +16,10 @@ import io.darkstar.config.json.Config;
 import io.darkstar.config.json.StormpathConfig;
 import io.darkstar.config.json.TlsConfig;
 import io.darkstar.config.json.VirtualHostConfig;
-import io.darkstar.ducksboard.DucksboardPoster;
 import io.darkstar.tls.BouncyCastleKeyEntryFactory;
 import io.darkstar.tls.KeyEntry;
 import io.darkstar.tls.KeyEntryFactory;
 import io.darkstar.tls.SniKeyManager;
-import com.stormpath.sdk.application.Application;
-import com.stormpath.sdk.cache.Caches;
-import com.stormpath.sdk.client.Client;
-import com.stormpath.sdk.client.Clients;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
@@ -33,6 +32,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.client.RestTemplate;
+import reactor.core.Environment;
+import reactor.core.Reactor;
+import reactor.core.spec.Reactors;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -126,6 +128,16 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         return new Host(JSON_CONFIG.getHost(), JSON_CONFIG.getPort());
     }
 
+    @Bean
+    public Environment reactorEnvironment() {
+        return new Environment();
+    }
+
+    @Bean
+    public Reactor reactor() {
+        return Reactors.reactor().env(reactorEnvironment()).dispatcher(Environment.EVENT_LOOP).get();
+    }
+
     @Bean(destroyMethod = "shutdown")
     public Executor eventBusExecutor() {
         int numProcs = Runtime.getRuntime().availableProcessors();
@@ -175,10 +187,12 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         return new MetricRegistry();
     }
 
+    /*
     @Bean
     public DucksboardPoster ducksboardPoster() {
         return new DucksboardPoster(ducksboardApiKey(), restTemplate());
     }
+    */
 
     @Bean
     public Client stormpathClient() {
@@ -326,6 +340,7 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         return vhostConfig().getStormpath();
     }
 
+    /*
     private String ducksboardApiKey() {
         return vhostConfig().getDucksboard().getApiKey();
     }
@@ -333,5 +348,6 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
     private String datadogApiKey() {
         return vhostConfig().getDatadog().getApiKey();
     }
+    */
 
 }
