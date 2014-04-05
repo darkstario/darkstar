@@ -1,59 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~ Copyright (c) 2014, Stormpath, Inc.
-  ~ All rights reserved.
-  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.stormpath.poms</groupId>
-        <artifactId>java-pom</artifactId>
-        <version>1</version>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>9</version>
     </parent>
 
-    <groupId>com.stormpath.monban</groupId>
-    <artifactId>stormpath-monban-root</artifactId>
+    <groupId>io.darkstar</groupId>
+    <artifactId>darkstar-root</artifactId>
     <packaging>pom</packaging>
     <version>0-SNAPSHOT</version>
-    <name>Monban</name>
-    <description>
-        Monban (Japanese for 'gatekeeper') is a 'big data' reverse proxy load balancer that also enforces security
-        policies.
-    </description>
-    <url>https://stormpath.atlassian.net/browse/MONBAN</url>
+    <name>Darkstar</name>
+    <description>Darkstar is a high-performance reverse proxy load balancer.</description>
+    <url>https://github.com/darkstario/darkstar</url>
     <inceptionYear>2014</inceptionYear>
 
-    <organization>
-        <name>Stormpath, Inc.</name>
-        <url>http://www.stormpath.com</url>
-    </organization>
-
     <scm>
-        <connection>scm:git:git@bitbucket.org:stormpath/monban.git</connection>
-        <developerConnection>scm:git:git@bitbucket.org:stormpath/monban.git</developerConnection>
-        <url>git@bitbucket.org:stormpath/monban.git</url>
+        <connection>scm:git:https://github.com/darkstario/darkstar.git</connection>
+        <developerConnection>scm:git:git@github.com:darkstario/darkstar.git</developerConnection>
+        <url>git@github.com:darkstario/darkstar.git</url>
         <tag>HEAD</tag>
     </scm>
     <issueManagement>
-        <system>Atlassian Ondemand: Jira</system>
-        <url>https://stormpath.atlassian.net/browse/MONBAN</url>
+        <system>GitHub Issues</system>
+        <url>https://github.com/darkstario/darkstar/issues</url>
     </issueManagement>
 
-    <!-- <ciManagement>
-        <system>JetBrains TeamCity</system>
-        <url>https://ci.stormpath.com/project.html?projectId=project15&amp;tab=projectOverview</url>
-    </ciManagement> -->
+    <ciManagement>
+        <system>TravisCI</system>
+        <url>https://travis-ci.org/darkstario/darkstar</url>
+    </ciManagement>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.jar.version>2.4</maven.jar.version>
+        <maven.compiler.version>3.1</maven.compiler.version>
 
+        <jdk.version>1.8</jdk.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <buildNumber>${user.name}-${maven.build.timestamp}</buildNumber>
         <clover.coverage.percentage>71.5%</clover.coverage.percentage>
-        <clover.history.dir>${user.home}/.stormpath/monban/clover/history/monban</clover.history.dir>
-        <clover.database>${user.home}/.stormpath/monban/clover/database/clover.db</clover.database>
-        <maven.clover.licenseLocation>${user.home}/.stormpath/clover/clover.license</maven.clover.licenseLocation>
+        <clover.history.dir>${user.home}/.darkstario/darkstar/clover/history</clover.history.dir>
+        <clover.database>${user.home}/.darkstario/darkstar/clover/database/clover.db</clover.database>
+        <maven.clover.licenseLocation>${user.home}/.darkstario/clover/clover.license</maven.clover.licenseLocation>
 
         <bouncycastle.version>1.50</bouncycastle.version>
         <failsafe.plugin.version>2.12.4</failsafe.plugin.version>
@@ -68,7 +59,7 @@
         <shiro.version>1.2.2</shiro.version>
         <slf4j.version>1.7.6</slf4j.version>
         <sonar.plugin.version>2.0</sonar.plugin.version>
-        <spring.version>4.0.2.RELEASE</spring.version>
+        <spring.version>4.0.3.RELEASE</spring.version>
         <stormpath.sdk.version>1.0.alpha</stormpath.sdk.version>
         <metrics.version>3.0.1</metrics.version>
     </properties>
@@ -81,8 +72,8 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>com.stormpath.monban</groupId>
-                <artifactId>stormpath-monban-core</artifactId>
+                <groupId>io.darkstar</groupId>
+                <artifactId>darkstar-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -143,21 +134,7 @@
                 <version>${bouncycastle.version}</version>
             </dependency>
 
-            <!--
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpclient</artifactId>
-                <version>${httpClient.version}</version>
-                <!- - We use SLF4J instead: - ->
-                <exclusions>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            -->
-            <!-- See http://docs.spring.io/spring/docs/4.0.2.RELEASE/spring-framework-reference/htmlsingle/#overview-maven-bom -->
+            <!-- See http://docs.spring.io/spring/docs/4.0.3.RELEASE/spring-framework-reference/htmlsingle/#overview-maven-bom -->
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-framework-bom</artifactId>
@@ -199,209 +176,76 @@
     </dependencyManagement>
 
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.0</version>
-                <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.4</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <!-- For unit tests: -->
-                <groupId>org.codehaus.gmaven</groupId>
-                <artifactId>gmaven-plugin</artifactId>
-                <version>1.5</version>
-                <configuration>
-                    <providerSelection>1.8</providerSelection>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.codehaus.gmaven.runtime</groupId>
-                        <artifactId>gmaven-runtime-1.8</artifactId>
-                        <version>1.5</version>
-                        <exclusions>
-                            <exclusion>
-                                <groupId>org.codehaus.groovy</groupId>
-                                <artifactId>groovy-all</artifactId>
-                            </exclusion>
-                        </exclusions>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.codehaus.groovy</groupId>
-                        <artifactId>groovy-all</artifactId>
-                        <version>${groovy.version}</version>
-                    </dependency>
-                </dependencies>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generateStubs</goal>
-                            <goal>compile</goal>
-                            <goal>generateTestStubs</goal>
-                            <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.16</version>
-                <configuration>
-                    <includes>
-                        <include>**/*IT.java</include>
-                        <include>**/*IT.groovy</include>
-                        <include>**/*ITCase.java</include>
-                        <include>**/*ITCase.groovy</include>
-                    </includes>
-                    <excludes>
-                        <exclude>**/*ManualIT.java</exclude>
-                        <exclude>**/*ManualIT.groovy</exclude>
-                    </excludes>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.4.2</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.scm</groupId>
-                        <artifactId>maven-scm-provider-gitexe</artifactId>
-                        <version>1.8.1</version>
-                    </dependency>
-                </dependencies>
-                <configuration>
-                    <mavenExecutorId>forked-path</mavenExecutorId>
-                    <useReleaseProfile>false</useReleaseProfile>
-                    <arguments>-Pdocs,stormpath-signature</arguments>
-                    <autoVersionSubmodules>true</autoVersionSubmodules>
-                </configuration>
-            </plugin>
-        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven.compiler.version}</version>
+                    <configuration>
+                        <source>${jdk.version}</source>
+                        <target>${jdk.version}</target>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven.jar.version}</version>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            </manifest>
+                        </archive>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>2.17</version>
+                    <configuration>
+                        <includes>
+                            <include>**/*IT.java</include>
+                            <include>**/*IT.groovy</include>
+                            <include>**/*ITCase.java</include>
+                            <include>**/*ITCase.groovy</include>
+                        </includes>
+                        <excludes>
+                            <exclude>**/*ManualIT.java</exclude>
+                            <exclude>**/*ManualIT.groovy</exclude>
+                        </excludes>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>2.5</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.maven.scm</groupId>
+                            <artifactId>maven-scm-provider-gitexe</artifactId>
+                            <version>1.9</version>
+                        </dependency>
+                    </dependencies>
+                    <configuration>
+                        <mavenExecutorId>forked-path</mavenExecutorId>
+                        <useReleaseProfile>false</useReleaseProfile>
+                        <arguments>${arguments} -Psonatype-oss-release</arguments>
+                        <autoVersionSubmodules>true</autoVersionSubmodules>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
-
-    <profiles>
-        <profile>
-            <id>stormpath-signature</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.4</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <!--
-        <profile>
-            <id>docs</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.9.1</version>
-                        <executions>
-                            <execution>
-                                <id>attach-api-docs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <inherited>true</inherited>
-                        <configuration>
-                            <top><![CDATA[
-    <script type="text/javascript">
-
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-29159574-1']);
-  _gaq.push(['_setDomainName', 'stormpath.com']);
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-<!- - kissmetrics - ->
-<script type="text/javascript">
-  var _kmq = _kmq || [];
-  var _kmk = _kmk || '684b854336bd3a6523260ebd991eec06b18b929a';
-  function _kms(u){
-    setTimeout(function(){
-      var d = document, f = d.getElementsByTagName('script')[0],
-      s = d.createElement('script');
-      s.type = 'text/javascript'; s.async = true; s.src = u;
-      f.parentNode.insertBefore(s, f);
-    }, 1);
-  }
-  _kms('//i.kissmetrics.com/i.js');
-  _kms('//doug1izaerwt3.cloudfront.net/' + _kmk + '.1.js');
-</script>
-
-<!- - Optimizely - ->
-<script src="//cdn.optimizely.com/js/225847041.js"></script>
-                                ]]></top>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>2.1.2</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <inherited>true</inherited>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        -->
-    </profiles>
 
 </project>

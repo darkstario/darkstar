@@ -1,35 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~ Copyright (c) 2014, Stormpath, Inc.
-  ~ All rights reserved.
-  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.stormpath.monban</groupId>
-        <artifactId>stormpath-monban-root</artifactId>
+        <groupId>io.darkstar</groupId>
+        <artifactId>darkstar-root</artifactId>
         <version>0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>stormpath-monban</artifactId>
-    <name>Stormpath Monban :: Dist</name>
+    <artifactId>darkstar</artifactId>
+    <name>Darkstar :: Dist</name>
     <packaging>jar</packaging>
 
     <dependencies>
-
         <dependency>
-            <groupId>com.stormpath.monban</groupId>
-            <artifactId>stormpath-monban-core</artifactId>
+            <groupId>io.darkstar</groupId>
+            <artifactId>darkstar-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-        </dependency>
-
     </dependencies>
 
     <build>
@@ -37,7 +26,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.4</version>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -48,7 +36,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>com.stormpath.monban.Monban</mainClass>
+                            <mainClass>io.darkstar.Darkstar</mainClass>
                         </manifest>
                     </archive>
                     <appendAssemblyId>false</appendAssemblyId>

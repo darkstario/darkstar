@@ -1,22 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~ Copyright (c) 2014, Stormpath, Inc.
-  ~ All rights reserved.
-  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.stormpath.monban</groupId>
-        <artifactId>stormpath-monban-root</artifactId>
+        <groupId>io.darkstar</groupId>
+        <artifactId>darkstar-root</artifactId>
         <version>0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>stormpath-monban-core</artifactId>
-    <name>Stormpath Monban :: Core</name>
+    <artifactId>darkstar-core</artifactId>
+    <name>Darkstar :: Core</name>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -65,7 +61,6 @@
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk15on</artifactId>
         </dependency>
-        <!-- Spring config: -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
