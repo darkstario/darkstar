@@ -71,8 +71,8 @@ public class Darkstar {
             f.sync().channel().closeFuture().sync();
 
         } finally {
-            workerGroup.shutdownGracefully();
-            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully().syncUninterruptibly();
+            bossGroup.shutdownGracefully().syncUninterruptibly();
             appCtx.close();
         }
     }
