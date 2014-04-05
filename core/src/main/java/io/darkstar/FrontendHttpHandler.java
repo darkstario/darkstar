@@ -46,7 +46,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static io.netty.handler.codec.http.HttpConstants.*;
 import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 import static io.netty.handler.codec.http.HttpVersion.*;
 
@@ -112,15 +111,12 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
         outboundChannel = f.channel();
 
-        f.addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (future.isSuccess()) {
-                    tunnelEstablished(ctx);
-                } else {
-                    //can't connect to backend - show error:
-                    sendError(ctx, HttpResponseStatus.SERVICE_UNAVAILABLE, null);
-                }
+        f.addListener(future -> {
+            if (future.isSuccess()) {
+                tunnelEstablished(ctx);
+            } else {
+                //can't connect to backend - show error:
+                sendError(ctx, HttpResponseStatus.SERVICE_UNAVAILABLE, null);
             }
         });
     }
@@ -192,11 +188,17 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         HttpObject msg;
 
         while ((msg = messageQueue.poll()) != null) {
-            onTunnelMessage(ctx, msg);
+            tunnelRead(ctx, msg);
         }
     }
 
-    private void onTunnelMessage(final ChannelHandlerContext ctx, Object msg) throws Exception {
+    /**
+     * Invoked when a tunnel has already been established between the http client and origin http server, and the
+     * frontend channel has read a message from the peer.  The semantics of this method are identical to
+     * {@link #channelRead(io.netty.channel.ChannelHandlerContext, Object)}, but it will only be invoked when
+     * a tunnel has been established.
+     */
+    private void tunnelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
 
         Object outboundMsg = msg;
 
@@ -334,15 +336,12 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         }
 
         if (outboundChannel.isActive()) {
-            outboundChannel.writeAndFlush(outboundMsg).addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
-                    if (future.isSuccess()) {
-                        // was able to flush out data, start to read the next chunk
-                        ctx.channel().read();
-                    } else {
-                        future.channel().close(); //not successful - close the outbound channel;
-                    }
+            outboundChannel.writeAndFlush(outboundMsg).addListener(future -> {
+                if (future.isSuccess()) {
+                    // was able to flush out data, start to read the next chunk
+                    ctx.channel().read();
+                } else {
+                    ((ChannelFuture)future).channel().close(); //not successful - close the outbound channel;
                 }
             });
         }
@@ -399,21 +398,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         return parseHost(addr.toString());
     }
 
-    private static void writeHeader(ByteBuf buf, CharSequence headerName, Object headerValue) {
-        buf.writeBytes(utf8(headerName.toString())).writeByte(COLON).writeBytes(utf8(String.valueOf(headerValue)));
-        appendCrlf(buf);
-    }
-
-    private static ByteBuf appendCrlf(ByteBuf buf) {
-        buf.writeByte(CR).writeByte(LF);
-        return buf;
-    }
-
-    private static byte[] ascii(Object o) {
-        return String.valueOf(o).getBytes(Charsets.US_ASCII);
-    }
-
-    private static byte[] utf8(String o) {
+    private static byte[] utf8(Object o) {
         return String.valueOf(o).getBytes(Charsets.UTF_8);
     }
 
@@ -424,7 +409,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
     private static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status, /*HACK*/ String wwwAuthcValue) {
 
-        byte[] bodyBytes = ascii(status);
+        byte[] bodyBytes = utf8(status);
         final ByteBuf body = ctx.alloc().buffer(bodyBytes.length);
         body.writeBytes(bodyBytes);
 
@@ -437,14 +422,11 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         }
 
         // Close the connection as soon as the error message is sent.
-        ctx.writeAndFlush(response).addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-                try {
-                    future.channel().close();
-                } finally {
-                    release(body);
-                }
+        ctx.writeAndFlush(response).addListener(future -> {
+            try {
+                ((ChannelFuture)future).channel().close();
+            } finally {
+                release(body);
             }
         });
     }
