@@ -481,7 +481,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        cause.printStackTrace();
+        log.error("Unexpected exception.", cause);
         closeOnFlush(ctx.channel());
     }
 
