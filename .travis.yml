@@ -1,0 +1,9 @@
+# https://travis-ci.org/darkstario/darkstar
+language: java
+
+jdk:
+  - oraclejdk8
+
+install: echo "No need to run mvn install -DskipTests then mvn install.  Running mvn install."
+script: mvn install
+

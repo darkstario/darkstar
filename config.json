@@ -35,12 +35,6 @@
         "authenticate": [
           "/show-all-headers.php"
         ]
-      },
-      "ducksboard": {
-        "apiKey": "1vO8XZ2yqnVikqmaP7p6CJMi8jKMtvAd4f7COMM0diVmle2RTV"
-      },
-      "datadog": {
-        "apiKey": "d65413e484e19cdb681f19e3d5d16865"
       }
     }
   ]
