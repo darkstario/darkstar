@@ -6,9 +6,13 @@
     "cert": "core/src/test/resources/example.com.pem.crt",
     "key": "core/src/test/resources/example.com.pem.key"
   },
-  "logFormat": {
-    "access": "%date %-5level [%thread] %logger{36} %m%n",
-    "error": "%date %-5level [%thread] %logger{36} %m%n"
+  "systemLog": {
+    "path": "logs/error.log",
+    "format": "%date %-5level [%thread] %logger{36} %m%n",
+    "level": "error"
+  },
+  "accessLog": {
+    "format": "%h %l %u [%t] \"%r\" %s %b \"%i{Referer}\" \"%i{User-Agent}\""
   },
   "vhosts": [
     {
@@ -18,14 +22,7 @@
         "cert": "core/src/test/resources/vhost.com.pem.crt",
         "key": "core/src/test/resources/vhost.com.pem.key"
       },
-      "log": {
-        "access": "target/logs/vhosts/vhost.com/access.log",
-        "error": "target/logs/vhosts/vhost.com/error.log",
-        "complex": {
-          "path": "target/logs/vhosts/vhosts.com/foo.log",
-          "format": "access"
-        }
-      },
+      "accessLog": "target/logs/vhosts/vhost.com/access.log",
       "balance": {
         "members": ["localhost:8080"]
       },

@@ -1,7 +1,5 @@
 package io.darkstar.config.spring;
 
-import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
-import ch.qos.logback.core.FileAppender;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
@@ -13,21 +11,23 @@ import io.darkstar.config.DefaultHostFactory;
 import io.darkstar.config.Host;
 import io.darkstar.config.HostFactory;
 import io.darkstar.config.json.Config;
+import io.darkstar.config.json.DefaultLogConfigFactory;
+import io.darkstar.config.json.SystemLogConfigFactory;
+import io.darkstar.config.json.LogConfig;
+import io.darkstar.config.json.LogConfigFactory;
 import io.darkstar.config.json.StormpathConfig;
+import io.darkstar.config.json.SystemLogConfig;
 import io.darkstar.config.json.TlsConfig;
 import io.darkstar.config.json.VirtualHostConfig;
 import io.darkstar.tls.BouncyCastleKeyEntryFactory;
 import io.darkstar.tls.KeyEntry;
 import io.darkstar.tls.KeyEntryFactory;
 import io.darkstar.tls.SniKeyManager;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.MutablePropertyValues;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
-import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -47,7 +47,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -60,54 +60,38 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
 
-        Map<String,String> logFormats = JSON_CONFIG.getLogFormat();
-        for(Map.Entry<String,String> entry : logFormats.entrySet()) {
-            String name = entry.getKey();
-            String patternString = entry.getValue();
+        LogConfigFactory<SystemLogConfig> systemLogConfigFactory = systemLogConfigFactory();
+        BeanDefinitionFactory<SystemLogConfig> systemLogBeanDefinitionFactory = systemLogBeanDefinitionFactory();
 
-            GenericBeanDefinition def = new GenericBeanDefinition();
-            def.setBeanClass(PatternLayoutEncoder.class);
-            def.setInitMethodName("start");
-            def.setDestroyMethodName("stop");
-            def.setPropertyValues(new MutablePropertyValues()
-                    .add("context", LoggerFactory.getILoggerFactory())
-                    .add("pattern", patternString)
-            );
-
-            String beanName = name + "LogFormat" + PatternLayoutEncoder.class.getSimpleName();
-            registry.registerBeanDefinition(beanName, def);
+        SystemLogConfig defaultSystemLogConfig = systemLogConfigFactory.newInstance(JSON_CONFIG.getSystemLog(), null);
+        Map<String,BeanDefinition> defs = systemLogBeanDefinitionFactory.createBeanDefinitions("default", defaultSystemLogConfig);
+        for(String name : defs.keySet()) {
+            registry.registerBeanDefinition(name, defs.get(name));
         }
 
-        Map<String,VirtualHostConfig> vhosts = virtualHosts();
+        LogConfigFactory<LogConfig> accessLogConfigFactory = accessLogConfigFactory();
+        BeanDefinitionFactory<LogConfig> accessLogBeanDefinitionFactory = accessLogBeanDefinitionFactory();
+        LogConfig defaultAccessLogConfig = accessLogConfigFactory.newInstance(JSON_CONFIG.getAccessLog(), null);
 
-        for(VirtualHostConfig vhost : vhosts.values()) {
+        Map<String, VirtualHostConfig> vhosts = virtualHosts();
 
-            String vhostName = vhost.getName();
+        for (VirtualHostConfig vhost : vhosts.values()) {
 
-            Map<String,Object> vhostLogs = vhost.getLog();
+            Object vhostSystemLog = vhost.getSystemLog();
+            if (vhostSystemLog != null) {
+                SystemLogConfig vhostSystemLogConfig = systemLogConfigFactory.newInstance(vhost.getSystemLog(), defaultSystemLogConfig);
+                defs = systemLogBeanDefinitionFactory.createBeanDefinitions(vhost.getName(), vhostSystemLogConfig);
+                for(String name : defs.keySet()) {
+                    registry.registerBeanDefinition(name, defs.get(name));
+                }
+            }
 
-            for(Map.Entry<String,Object> log : vhostLogs.entrySet()) {
-                String name = log.getKey();
-                Object value = log.getValue();
-
-                if (value instanceof String) {
-                    String path = (String)value;
-
-                    String encoderBeanName = name + "LogFormat" + PatternLayoutEncoder.class.getSimpleName();
-
-                    GenericBeanDefinition def = new GenericBeanDefinition();
-                    def.setBeanClass(FileAppender.class);
-                    def.setInitMethodName("start");
-                    def.setDestroyMethodName("stop");
-                    def.setPropertyValues(new MutablePropertyValues()
-                            .add("context", LoggerFactory.getILoggerFactory())
-                            .add("file", path)
-                            .add("encoder", new RuntimeBeanReference(encoderBeanName))
-                    );
-
-                    String beanName = vhostName + name + "log";
-
-                    registry.registerBeanDefinition(beanName, def);
+            Object vhostAccessLog = vhost.getAccessLog();
+            if (vhostAccessLog != null) {
+                LogConfig vhostAccessLogConfig = accessLogConfigFactory.newInstance(vhostAccessLog, defaultAccessLogConfig);
+                defs = accessLogBeanDefinitionFactory.createBeanDefinitions(vhost.getName(), vhostAccessLogConfig);
+                for(String name : defs.keySet()) {
+                    registry.registerBeanDefinition(name, defs.get(name));
                 }
             }
         }
@@ -116,6 +100,26 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
         //no-op
+    }
+
+    @Bean
+    public LogConfigFactory<SystemLogConfig> systemLogConfigFactory() {
+        return new SystemLogConfigFactory();
+    }
+
+    @Bean
+    public LogConfigFactory<LogConfig> accessLogConfigFactory() {
+        return new DefaultLogConfigFactory();
+    }
+
+    @Bean
+    public BeanDefinitionFactory<SystemLogConfig> systemLogBeanDefinitionFactory() {
+        return new SystemLogBeanDefinitionFactory();
+    }
+
+    @Bean
+    public BeanDefinitionFactory<LogConfig> accessLogBeanDefinitionFactory() {
+        return new AccessLogBeanDefinitionFactory();
     }
 
     @Bean
@@ -139,9 +143,9 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
     }
 
     @Bean(destroyMethod = "shutdown")
-    public Executor eventBusExecutor() {
+    public ExecutorService eventBusExecutor() {
         int numProcs = Runtime.getRuntime().availableProcessors();
-        return Executors.newFixedThreadPool(numProcs);
+        return Executors.newFixedThreadPool(numProcs * 2);
     }
 
     @Bean
@@ -254,8 +258,8 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         r.nextBytes(bytes);
         byte[] base64Encoded = Base64.getEncoder().encode(bytes);
         char[] randomPassword = new char[base64Encoded.length];
-        for (int i = base64Encoded.length; i-- > 0;) {
-            randomPassword[i] = (char)(base64Encoded[i] & 0xff);
+        for (int i = base64Encoded.length; i-- > 0; ) {
+            randomPassword[i] = (char) (base64Encoded[i] & 0xff);
         }
 
         char[] password = "changeit".toCharArray();
@@ -274,8 +278,8 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         }
 
         //then load vhosts:
-        Map<String,VirtualHostConfig> vhosts = virtualHosts();
-        for(Map.Entry<String,VirtualHostConfig> entry : vhosts.entrySet()) {
+        Map<String, VirtualHostConfig> vhosts = virtualHosts();
+        for (Map.Entry<String, VirtualHostConfig> entry : vhosts.entrySet()) {
             VirtualHostConfig vhost = entry.getValue();
             tlsConfig = vhost.getTls();
             if (tlsConfig != null) {

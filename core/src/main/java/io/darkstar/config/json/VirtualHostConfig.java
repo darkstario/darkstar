@@ -1,13 +1,12 @@
 package io.darkstar.config.json;
 
-import java.util.Map;
-
 public class VirtualHostConfig {
 
     private String name;
     private String description;
     private TlsConfig tls;
-    private Map<String,Object> log;
+    private Object accessLog;
+    private Object systemLog;
     private BalanceConfig balance;
     private StormpathConfig stormpath;
     private DucksboardConfig ducksboard;
@@ -27,8 +26,12 @@ public class VirtualHostConfig {
         return tls;
     }
 
-    public Map<String, Object> getLog() {
-        return log;
+    public Object getAccessLog() {
+        return accessLog;
+    }
+
+    public Object getSystemLog() {
+        return systemLog;
     }
 
     public BalanceConfig getBalance() {

@@ -10,7 +10,9 @@ public class Config {
     private int port;
     private TlsConfig tls;
     private List<VirtualHostConfig> vhosts;
-    private Map<String,String> logFormat;
+
+    private Object systemLog; //string or map of props
+    private Object accessLog; //string or map of props
 
     public Config() {
         host = "0.0.0.0"; //bind any/all addresses by default
@@ -37,7 +39,11 @@ public class Config {
         return vhosts;
     }
 
-    public Map<String, String> getLogFormat() {
-        return logFormat;
+    public Object getSystemLog() {
+        return systemLog;
+    }
+
+    public Object getAccessLog() {
+        return accessLog;
     }
 }

@@ -18,6 +18,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -68,7 +69,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
     @Qualifier("virtualHosts")
     private Map<String, VirtualHostConfig> virtualHosts;
 
-    private Channel outboundChannel;
+    private Channel backendChannel;
 
     //whether or not a frontend-to-backend tunnel is established
     private volatile boolean tunnelEstablished;
@@ -97,19 +98,19 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
     private void connectToDestination(final ChannelHandlerContext ctx, Host destination) throws Exception {
 
-        final Channel inboundChannel = ctx.channel();
+        final Channel frontendChannel = ctx.channel();
 
         // Start the connection attempt.
         Bootstrap b = new Bootstrap();
-        b.group(inboundChannel.eventLoop())
+        b.group(frontendChannel.eventLoop())
                 .channel(ctx.channel().getClass())
-                .handler(new BackendInitializer(inboundChannel, this.eventBus))
+                .handler(new BackendInitializer(frontendChannel, this.eventBus))
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                 .option(ChannelOption.AUTO_READ, false);
 
         ChannelFuture f = b.connect(destination.getName(), destination.getPort());
 
-        outboundChannel = f.channel();
+        backendChannel = f.channel();
 
         f.addListener(future -> {
             if (future.isSuccess()) {
@@ -126,6 +127,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
         if (!(msg instanceof HttpObject) || !(((HttpObject) msg).getDecoderResult().isSuccess())) {
             sendError(ctx, HttpResponseStatus.BAD_REQUEST, null);
+            return;
         }
 
         //noinspection ConstantConditions
@@ -335,8 +337,8 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             outboundMsg = content.content();
         }
 
-        if (outboundChannel.isActive()) {
-            outboundChannel.writeAndFlush(outboundMsg).addListener(future -> {
+        if (backendChannel.isActive()) {
+            backendChannel.writeAndFlush(outboundMsg).addListener(future -> {
                 if (future.isSuccess()) {
                     // was able to flush out data, start to read the next chunk
                     ctx.channel().read();
@@ -345,6 +347,16 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                 }
             });
         }
+    }
+
+    /**
+     * Invoked when the BackendHandler receives data from the origin server and relays it to the frontend channel.
+     * This is only invoked after a tunnel has been established, and the backend handler is relaying responses through
+     * the tunnel.
+     */
+    @Override
+    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+        super.write(ctx, msg, promise);
     }
 
     private static String toHttpHostString(Host host) {
@@ -439,8 +451,8 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        if (outboundChannel != null) {
-            closeOnFlush(outboundChannel);
+        if (backendChannel != null) {
+            closeOnFlush(backendChannel);
         }
     }
 

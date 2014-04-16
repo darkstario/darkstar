@@ -10,11 +10,11 @@ import io.netty.handler.codec.http.HttpResponseDecoder;
 
 public class BackendInitializer extends ChannelInitializer<SocketChannel> {
 
-    private final Channel inboundChannel;
+    private final Channel frontendChannel;
     private EventBus eventBus;
 
-    public BackendInitializer(Channel inboundChannel, EventBus eventBus) {
-        this.inboundChannel = inboundChannel;
+    public BackendInitializer(Channel frontendChannel, EventBus eventBus) {
+        this.frontendChannel = frontendChannel;
         this.eventBus = eventBus;
     }
 
@@ -26,7 +26,7 @@ public class BackendInitializer extends ChannelInitializer<SocketChannel> {
         p.addLast("backendHttpRequestEncoder", new HttpRequestEncoder());
         p.addLast("backendHttpResponseDecoder", new HttpResponseDecoder());
 
-        BackendHandler backendHandler = new BackendHandler(this.inboundChannel, this.eventBus);
+        BackendHandler backendHandler = new BackendHandler(this.frontendChannel, this.eventBus);
         p.addLast("backendHandler", backendHandler);
     }
 
