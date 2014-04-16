@@ -44,6 +44,8 @@ public class AccessLogFilter extends HttpFilter {
                 AccessLogHttpServletRequest request = tuple.getT1();
                 AccessLogHttpServletResponse response = tuple.getT2();
 
+                //TODO: create AccessEvent?
+
             });
 
             deferred.accept(Tuple.of(currentRequest, httpResponse));

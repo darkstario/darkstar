@@ -7,7 +7,7 @@
     "key": "core/src/test/resources/example.com.pem.key"
   },
   "systemLog": {
-    "path": "logs/error.log",
+    "path": "target/logs/error.log",
     "format": "%date %-5level [%thread] %logger{36} %m%n",
     "level": "error"
   },
