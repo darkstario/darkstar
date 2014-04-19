@@ -12,6 +12,7 @@ import java.util.Locale;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 
+@SuppressWarnings("deprecation")
 public class AccessLogHttpServletResponse extends AccessLogHttpMessage implements HttpServletResponse {
 
     private final HttpResponse response;

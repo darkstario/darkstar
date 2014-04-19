@@ -7,16 +7,17 @@ import com.stormpath.sdk.application.Application;
 import com.stormpath.sdk.cache.Caches;
 import com.stormpath.sdk.client.Client;
 import com.stormpath.sdk.client.Clients;
+import io.darkstar.Darkstar;
 import io.darkstar.config.DefaultHostFactory;
 import io.darkstar.config.Host;
 import io.darkstar.config.HostFactory;
 import io.darkstar.config.json.Config;
 import io.darkstar.config.json.DefaultLogConfigFactory;
-import io.darkstar.config.json.SystemLogConfigFactory;
 import io.darkstar.config.json.LogConfig;
 import io.darkstar.config.json.LogConfigFactory;
 import io.darkstar.config.json.StormpathConfig;
 import io.darkstar.config.json.SystemLogConfig;
+import io.darkstar.config.json.SystemLogConfigFactory;
 import io.darkstar.config.json.TlsConfig;
 import io.darkstar.config.json.VirtualHostConfig;
 import io.darkstar.tls.BouncyCastleKeyEntryFactory;
@@ -57,6 +58,8 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
 
     public static Config JSON_CONFIG;
 
+    public static Map YAML = Darkstar.YAML;
+
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
 
@@ -64,8 +67,8 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         BeanDefinitionFactory<SystemLogConfig> systemLogBeanDefinitionFactory = systemLogBeanDefinitionFactory();
 
         SystemLogConfig defaultSystemLogConfig = systemLogConfigFactory.newInstance(JSON_CONFIG.getSystemLog(), null);
-        Map<String,BeanDefinition> defs = systemLogBeanDefinitionFactory.createBeanDefinitions("default", defaultSystemLogConfig);
-        for(String name : defs.keySet()) {
+        Map<String, BeanDefinition> defs = systemLogBeanDefinitionFactory.createBeanDefinitions("default", defaultSystemLogConfig);
+        for (String name : defs.keySet()) {
             registry.registerBeanDefinition(name, defs.get(name));
         }
 
@@ -81,7 +84,7 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
             if (vhostSystemLog != null) {
                 SystemLogConfig vhostSystemLogConfig = systemLogConfigFactory.newInstance(vhost.getSystemLog(), defaultSystemLogConfig);
                 defs = systemLogBeanDefinitionFactory.createBeanDefinitions(vhost.getName(), vhostSystemLogConfig);
-                for(String name : defs.keySet()) {
+                for (String name : defs.keySet()) {
                     registry.registerBeanDefinition(name, defs.get(name));
                 }
             }
@@ -90,7 +93,7 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
             if (vhostAccessLog != null) {
                 LogConfig vhostAccessLogConfig = accessLogConfigFactory.newInstance(vhostAccessLog, defaultAccessLogConfig);
                 defs = accessLogBeanDefinitionFactory.createBeanDefinitions(vhost.getName(), vhostAccessLogConfig);
-                for(String name : defs.keySet()) {
+                for (String name : defs.keySet()) {
                     registry.registerBeanDefinition(name, defs.get(name));
                 }
             }
