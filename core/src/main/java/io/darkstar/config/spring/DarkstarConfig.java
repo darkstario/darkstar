@@ -12,14 +12,12 @@ import io.darkstar.config.DefaultHostFactory;
 import io.darkstar.config.Host;
 import io.darkstar.config.HostFactory;
 import io.darkstar.config.json.Config;
-import io.darkstar.config.json.DefaultLogConfigFactory;
 import io.darkstar.config.json.LogConfig;
-import io.darkstar.config.json.LogConfigFactory;
 import io.darkstar.config.json.StormpathConfig;
 import io.darkstar.config.json.SystemLogConfig;
-import io.darkstar.config.json.SystemLogConfigFactory;
 import io.darkstar.config.json.TlsConfig;
 import io.darkstar.config.json.VirtualHostConfig;
+import io.darkstar.lang.Objects;
 import io.darkstar.tls.BouncyCastleKeyEntryFactory;
 import io.darkstar.tls.KeyEntry;
 import io.darkstar.tls.KeyEntryFactory;
@@ -60,39 +58,54 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
 
     public static Map YAML = Darkstar.YAML;
 
+    @SuppressWarnings("unchecked")
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
 
-        LogConfigFactory<SystemLogConfig> systemLogConfigFactory = systemLogConfigFactory();
         BeanDefinitionFactory<SystemLogConfig> systemLogBeanDefinitionFactory = systemLogBeanDefinitionFactory();
 
-        SystemLogConfig defaultSystemLogConfig = systemLogConfigFactory.newInstance(JSON_CONFIG.getSystemLog(), null);
+        SystemLogConfig defaultSystemLogConfig = Objects.newInstance(SystemLogConfig.class, YAML.get("system_log"));
         Map<String, BeanDefinition> defs = systemLogBeanDefinitionFactory.createBeanDefinitions("default", defaultSystemLogConfig);
         for (String name : defs.keySet()) {
             registry.registerBeanDefinition(name, defs.get(name));
         }
 
-        LogConfigFactory<LogConfig> accessLogConfigFactory = accessLogConfigFactory();
+        Map http = (Map) YAML.get("http");
+
         BeanDefinitionFactory<LogConfig> accessLogBeanDefinitionFactory = accessLogBeanDefinitionFactory();
-        LogConfig defaultAccessLogConfig = accessLogConfigFactory.newInstance(JSON_CONFIG.getAccessLog(), null);
 
-        Map<String, VirtualHostConfig> vhosts = virtualHosts();
+        LogConfig defaultAccessLogConfig = Objects.newInstance(LogConfig.class, http.get("access_log"));
 
-        for (VirtualHostConfig vhost : vhosts.values()) {
+        Map<String, Map> vhosts = (Map) http.get("vhosts");
 
-            Object vhostSystemLog = vhost.getSystemLog();
+        for (Map.Entry<String, Map> entry : vhosts.entrySet()) {
+
+            String vhostName = entry.getKey();
+            Map vhost = entry.getValue();
+
+            Object vhostSystemLog = vhost.get("system_log");
             if (vhostSystemLog != null) {
-                SystemLogConfig vhostSystemLogConfig = systemLogConfigFactory.newInstance(vhost.getSystemLog(), defaultSystemLogConfig);
-                defs = systemLogBeanDefinitionFactory.createBeanDefinitions(vhost.getName(), vhostSystemLogConfig);
+                SystemLogConfig vhostSystemLogConfig = Objects.newInstance(SystemLogConfig.class, defaultSystemLogConfig);
+                if (vhostSystemLog instanceof String) {
+                    vhostSystemLogConfig.setPath((String) vhostSystemLog);
+                } else {
+                    Objects.applyProperties(vhostSystemLogConfig, vhostSystemLog);
+                }
+                defs = systemLogBeanDefinitionFactory.createBeanDefinitions(vhostName, vhostSystemLogConfig);
                 for (String name : defs.keySet()) {
                     registry.registerBeanDefinition(name, defs.get(name));
                 }
             }
 
-            Object vhostAccessLog = vhost.getAccessLog();
+            Object vhostAccessLog = vhost.get("access_log");
             if (vhostAccessLog != null) {
-                LogConfig vhostAccessLogConfig = accessLogConfigFactory.newInstance(vhostAccessLog, defaultAccessLogConfig);
-                defs = accessLogBeanDefinitionFactory.createBeanDefinitions(vhost.getName(), vhostAccessLogConfig);
+                LogConfig vhostAccessLogConfig = Objects.newInstance(LogConfig.class, defaultAccessLogConfig);
+                if (vhostAccessLog instanceof String) {
+                    vhostAccessLogConfig.setPath((String) vhostAccessLog);
+                } else {
+                    Objects.applyProperties(vhostAccessLogConfig, vhostAccessLog);
+                }
+                defs = accessLogBeanDefinitionFactory.createBeanDefinitions(vhostName, vhostAccessLogConfig);
                 for (String name : defs.keySet()) {
                     registry.registerBeanDefinition(name, defs.get(name));
                 }
@@ -103,16 +116,6 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
         //no-op
-    }
-
-    @Bean
-    public LogConfigFactory<SystemLogConfig> systemLogConfigFactory() {
-        return new SystemLogConfigFactory();
-    }
-
-    @Bean
-    public LogConfigFactory<LogConfig> accessLogConfigFactory() {
-        return new DefaultLogConfigFactory();
     }
 
     @Bean
