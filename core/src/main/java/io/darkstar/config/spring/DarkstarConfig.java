@@ -11,17 +11,10 @@ import io.darkstar.Darkstar;
 import io.darkstar.config.DefaultHostFactory;
 import io.darkstar.config.Host;
 import io.darkstar.config.HostFactory;
-import io.darkstar.config.json.Config;
 import io.darkstar.config.json.LogConfig;
 import io.darkstar.config.json.StormpathConfig;
 import io.darkstar.config.json.SystemLogConfig;
-import io.darkstar.config.json.TlsConfig;
-import io.darkstar.config.json.VirtualHostConfig;
 import io.darkstar.lang.Objects;
-import io.darkstar.tls.BouncyCastleKeyEntryFactory;
-import io.darkstar.tls.KeyEntry;
-import io.darkstar.tls.KeyEntryFactory;
-import io.darkstar.tls.SniKeyManager;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -35,30 +28,20 @@ import reactor.core.Environment;
 import reactor.core.Reactor;
 import reactor.core.spec.Reactors;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.X509ExtendedKeyManager;
-import java.security.KeyStore;
-import java.security.SecureRandom;
-import java.util.Base64;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static io.darkstar.lang.Objects.*;
+
+@SuppressWarnings("unchecked")
 @Configuration
 public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
 
-    public static Config JSON_CONFIG;
-
     public static Map YAML = Darkstar.YAML;
 
-    @SuppressWarnings("unchecked")
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
 
@@ -118,6 +101,77 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         //no-op
     }
 
+    /*
+    @Bean
+    public Node rootConfigNode() {
+        return (Node)createMapNode("root", YAML, null);
+    }
+
+    private Object createNode(String name, Object o, Node parent) {
+        DefaultNode node = null;
+        if (name != null) {
+            node = new DefaultNode(name, o, parent);
+        }
+        return node != null ? node : o;
+    }
+
+    private Object createMapNode(String name, Map<String,?> m, Node parent) {
+
+        Map<String,Object> nodeValues = new LinkedHashMap<>(m.size());
+
+        DefaultNode node = null;
+
+        if (name != null) {
+            node = new DefaultNode(name, nodeValues);
+            node.setParent(parent);
+        }
+
+        for(Map.Entry<String,?> entry : m.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            if (value instanceof Map) {
+                Map<String,?> m2 = (Map<String,?>)value;
+                nodeValues.put(key, createMapNode(key, m2, node));
+            } else if (value instanceof Collection) {
+                Collection c = (Collection)value;
+                nodeValues.put(key, createCollectionNode(key, c, node));
+            } else {
+                nodeValues.put(key, createNode(key, value, node));
+            }
+        }
+
+        return node != null ? node : nodeValues;
+    }
+
+
+    private Object createCollectionNode(String name, Collection c, Node parent) {
+
+        List nodeValues = new ArrayList(c.size());
+
+        DefaultNode node = null;
+
+        if (name != null) {
+            node = new DefaultNode(name, nodeValues);
+            node.setParent(parent);
+        }
+
+        for(Object o : c) {
+            if (o instanceof Map) {
+                Map<String,?> m = (Map<String,?>)o;
+                nodeValues.add(createMapNode(null, m, node));
+            } else if (o instanceof Collection) {
+                Collection c2 = (Collection)o;
+                nodeValues.add(createCollectionNode(null, c2, node));
+            } else {
+                nodeValues.add(createNode(null, o, node));
+            }
+        }
+
+        return node != null ? node : nodeValues;
+    }
+    */
+
     @Bean
     public BeanDefinitionFactory<SystemLogConfig> systemLogBeanDefinitionFactory() {
         return new SystemLogBeanDefinitionFactory();
@@ -129,13 +183,11 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
     }
 
     @Bean
-    public Config jsonConfig() {
-        return JSON_CONFIG;
-    }
-
-    @Bean
     public Host defaultHost() {
-        return new Host(JSON_CONFIG.getHost(), JSON_CONFIG.getPort());
+        return new Host("127.0.0.1", 5000);
+        //String name = get(String.class, YAML, "['http']['name']");
+        //int port = get(Integer.class, YAML, "['http']['port']");
+        //return new Host(name, port);
     }
 
     @Bean(destroyMethod = "shutdown")
@@ -232,21 +284,6 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
     @Scope("prototype")
     public FrontendHttpHandler frontendHttpHandler() {
         return new FrontendHttpHandler();
-    }*/
-
-    @Bean(name = "virtualHosts")
-    public Map<String, VirtualHostConfig> virtualHosts() {
-        List<VirtualHostConfig> configs = JSON_CONFIG.getVhosts();
-        Map<String, VirtualHostConfig> vhosts = new LinkedHashMap<>(configs.size());
-        for (VirtualHostConfig config : configs) {
-            vhosts.put(config.getName().toLowerCase(), config);
-        }
-
-        return vhosts;
-    }
-
-    public VirtualHostConfig vhostConfig() {
-        return JSON_CONFIG.getVhosts().iterator().next();
     }
 
     @Bean
@@ -257,7 +294,7 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
     @Bean
     public KeyStore keyStore() throws Exception {
 
-        String name = jsonConfig().getName();
+        String name = get(String.class, YAML, "['http']['name']");
 
         Random r = new SecureRandom();
         byte[] bytes = new byte[32];
@@ -277,19 +314,20 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         //now load the keystore w/ the keys referenced in configuration:
 
         //first, load the system-wide default:
-        TlsConfig tlsConfig = jsonConfig().getTls();
+        TlsConfig tlsConfig = newInstance(TlsConfig.class, get(Object.class, YAML, "['http']['tls']"));
         if (tlsConfig != null) {
             KeyEntry keyEntry = keyEntryFactory.createKeyEntry(name, tlsConfig);
             ks.setKeyEntry(name, keyEntry.getPrivateKey(), password, keyEntry.getCertificateChain());
         }
 
         //then load vhosts:
-        Map<String, VirtualHostConfig> vhosts = virtualHosts();
-        for (Map.Entry<String, VirtualHostConfig> entry : vhosts.entrySet()) {
-            VirtualHostConfig vhost = entry.getValue();
-            tlsConfig = vhost.getTls();
-            if (tlsConfig != null) {
-                String vhostName = vhost.getName();
+        Map<String, Map> vhosts = get(Map.class, YAML, "['http']['vhosts']");
+        for (Map.Entry<String, Map> entry : vhosts.entrySet()) {
+            String vhostName = entry.getKey();
+            Map vhost = entry.getValue();
+            Object tls = vhost.get("tls");
+            if (tls != null) {
+                tlsConfig = newInstance(TlsConfig.class, tls);
                 KeyEntry keyEntry = keyEntryFactory.createKeyEntry(vhostName, tlsConfig);
                 ks.setKeyEntry(vhostName, keyEntry.getPrivateKey(), password, keyEntry.getCertificateChain());
             }
@@ -326,6 +364,7 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
 
         return context;
     }
+    */
 
     private static String applyUserHome(String path) {
         String toReplace = "${user.home}";
@@ -347,7 +386,8 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
 
     @Bean
     public StormpathConfig stormpathConfig() {
-        return vhostConfig().getStormpath();
+        Object stormpath = get(Object.class, YAML, "['http']['vhosts']['vhost.com']['stormpath']");
+        return newInstance(StormpathConfig.class, stormpath);
     }
 
     /*

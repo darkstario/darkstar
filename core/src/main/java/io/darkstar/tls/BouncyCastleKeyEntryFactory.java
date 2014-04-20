@@ -8,12 +8,15 @@ import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -27,7 +30,8 @@ public class BouncyCastleKeyEntryFactory implements KeyEntryFactory {
 
     private final JcaPEMKeyConverter pemKeyConverter = new JcaPEMKeyConverter();
 
-    public BouncyCastleKeyEntryFactory(){}
+    public BouncyCastleKeyEntryFactory() {
+    }
 
     private static File assertFile(String serverName, File file, boolean cert) {
         if (!file.exists()) {
@@ -45,59 +49,66 @@ public class BouncyCastleKeyEntryFactory implements KeyEntryFactory {
         return file;
     }
 
-    private List<Certificate> readCerts(File certFile) throws IOException, CertificateException {
+    private List<Certificate> readCerts(Resource resource) throws CertificateException, IOException {
 
-        PEMParser pemParser = new PEMParser(new BufferedReader(new FileReader(certFile)));
+        try (Reader reader = new BufferedReader(new InputStreamReader(resource.getInputStream(), "UTF-8"))) {
 
-        Object o;
+            PEMParser pemParser = new PEMParser(reader);
 
-        List<Certificate> certs = new ArrayList<>();
+            Object o;
 
-        while ((o = pemParser.readObject()) != null) {
-            if (!(o instanceof X509CertificateHolder)) {
-                String msg = "cert file " + certFile + " contains a resource that is not an X509 certificate.";
+            List<Certificate> certs = new ArrayList<>();
+
+            while ((o = pemParser.readObject()) != null) {
+                if (!(o instanceof X509CertificateHolder)) {
+                    String msg = "cert file " + resource.getDescription() + " contains a resource that is not an " +
+                            "X509 certificate.";
+                    throw new IllegalArgumentException(msg);
+                }
+                X509CertificateHolder holder = (X509CertificateHolder) o;
+                X509Certificate cert = x509Converter.getCertificate(holder);
+                certs.add(cert);
+            }
+
+            if (certs.isEmpty()) {
+                String msg = "Unable to find any public certificates in cert file " + resource.getDescription();
                 throw new IllegalArgumentException(msg);
             }
-            X509CertificateHolder holder = (X509CertificateHolder) o;
-            X509Certificate cert = x509Converter.getCertificate(holder);
-            certs.add(cert);
-        }
 
-        if (certs.isEmpty()) {
-            String msg = "Unable to find any public certificates in cert file " + certFile;
-            throw new IllegalArgumentException(msg);
+            return certs;
         }
-
-        return certs;
     }
 
-    private PrivateKey readPrivateKey(File keyFile) throws IOException {
+    private PrivateKey readPrivateKey(Resource resource) throws IOException {
 
-        PEMParser pemParser = new PEMParser(new BufferedReader(new FileReader(keyFile)));
+        try (Reader reader = new BufferedReader(new InputStreamReader(resource.getInputStream(), "UTF-8"))) {
 
-        PrivateKey privateKey;
+            PEMParser pemParser = new PEMParser(reader);
 
-        Object o = pemParser.readObject();
+            PrivateKey privateKey;
 
-        if (o == null) {
-            throw new IllegalArgumentException("Private key was not found in key file " + keyFile);
+            Object o = pemParser.readObject();
+
+            if (o == null) {
+                throw new IllegalArgumentException("Private key was not found in key file " + resource.getDescription());
+            }
+
+            if (o instanceof PEMKeyPair) {
+                PEMKeyPair pemKeyPair = (PEMKeyPair) o;
+                privateKey = pemKeyConverter.getPrivateKey(pemKeyPair.getPrivateKeyInfo());
+            } else if (o instanceof PrivateKeyInfo) {
+                PrivateKeyInfo privateKeyInfo = (PrivateKeyInfo) o;
+                privateKey = pemKeyConverter.getPrivateKey(privateKeyInfo);
+            } else if (o instanceof PKCS8EncryptedPrivateKeyInfo) {
+                String msg = "PKCS8 Encrypted PrivateKeys are not supported. Only unencrypted private keys.";
+                throw new IllegalArgumentException(msg);
+            } else {
+                String msg = "key file contains a resource that is not a private key.";
+                throw new IllegalArgumentException(msg);
+            }
+
+            return privateKey;
         }
-
-        if (o instanceof PEMKeyPair) {
-            PEMKeyPair pemKeyPair = (PEMKeyPair) o;
-            privateKey = pemKeyConverter.getPrivateKey(pemKeyPair.getPrivateKeyInfo());
-        } else if (o instanceof PrivateKeyInfo) {
-            PrivateKeyInfo privateKeyInfo = (PrivateKeyInfo) o;
-            privateKey = pemKeyConverter.getPrivateKey(privateKeyInfo);
-        } else if (o instanceof PKCS8EncryptedPrivateKeyInfo) {
-            String msg = "PKCS8 Encrypted PrivateKeys are not supported. Only unencrypted private keys.";
-            throw new IllegalArgumentException(msg);
-        } else {
-            String msg = "key file contains a resource that is not a private key.";
-            throw new IllegalArgumentException(msg);
-        }
-
-        return privateKey;
     }
 
     @Override
@@ -108,16 +119,23 @@ public class BouncyCastleKeyEntryFactory implements KeyEntryFactory {
         String path = config.getCert();
         Assert.hasText(path, serverName + " tls 'cert' file path is not specified.");
         File certFile = assertFile(serverName, new File(path), true);
+        Resource certFileResource = new FileSystemResource(certFile);
 
         path = config.getKey();
         Assert.hasText(path, serverName + " tls 'key' file path is not specified.");
         File keyFile = assertFile(serverName, new File(path), false);
+        Resource keyFileResource = new FileSystemResource(keyFile);
 
-        List<Certificate> certs = readCerts(certFile);
+        return createKeyEntry(certFileResource, keyFileResource);
+    }
 
-        PrivateKey privateKey = readPrivateKey(keyFile);
+    @Override
+    public KeyEntry createKeyEntry(Resource pemEncodedCert, Resource pemEncodedPrivateKey) throws IOException, CertificateException {
+
+        List<Certificate> certs = readCerts(pemEncodedCert);
+
+        PrivateKey privateKey = readPrivateKey(pemEncodedPrivateKey);
 
         return new DefaultKeyEntry(privateKey, certs);
     }
-
 }

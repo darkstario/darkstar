@@ -37,6 +37,7 @@ public class Darkstar {
     public void run() throws Exception {
 
         final Host host = appCtx.getBean("defaultHost", Host.class);
+        System.out.println("defaultHost: " + host);
 
         // Configure the bootstrap.
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);

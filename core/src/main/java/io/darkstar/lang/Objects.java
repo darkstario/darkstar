@@ -1,6 +1,12 @@
 package io.darkstar.lang;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
@@ -19,7 +25,8 @@ public class Objects {
             return instance;
         }
         if (config instanceof Map) {
-            return newInstance(clazz, (Map)config);
+            Map<String,?> m = (Map<String,?>)config;
+            return newInstance(clazz, m);
         }
         throw new UnsupportedOperationException("Cannot yet support shortcut single value configs.");
     }
@@ -35,7 +42,8 @@ public class Objects {
             return object;
         }
         if (config instanceof Map) {
-            return applyProperties(object, (Map)config);
+            Map<String,?> m = (Map<String,?>)config;
+            return applyProperties(object, m);
         }
         throw new UnsupportedOperationException("Cannot yet support shortcut single value configs.");
     }
@@ -43,9 +51,21 @@ public class Objects {
     public static <T> T applyProperties(T object, Map<String, ?> props) {
         for (Map.Entry<String, ?> entry : props.entrySet()) {
             Field field = ReflectionUtils.findField(object.getClass(), entry.getKey());
+            field.setAccessible(true);
             ReflectionUtils.setField(field, object, entry.getValue());
         }
         return object;
+    }
+
+
+    public static <T> T get(Class<T> type, Object o, String propPath) {
+        if (o == null) {
+            return null;
+        }
+
+        ExpressionParser parser = new SpelExpressionParser();
+        Expression expression = parser.parseExpression(propPath);
+        return expression.getValue(o, type);
     }
 
 }

@@ -36,6 +36,8 @@ http:
       cluster:
         name: foo
         servers:
+          - {weight: 5}
+          - {weight: 6, size: 42, list: [5, 3, 6]}
           - 192.168.1.100: {weight: 5}
           - 192.168.1.101: {weight: 5}
           - 192.168.1.102
