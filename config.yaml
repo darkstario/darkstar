@@ -42,8 +42,8 @@ http:
       access log: target/logs/vhosts/vhost.com/access.log
 
       stormpath:
-        api key file: ${user.home}/.stormpath/apiKey.properties
-        application href: https://api.stormpath.com/v1/applications/5ZgKzTewe54yoXwAc4ROPD
+        apiKeyFile: ${user.home}/.stormpath/apiKey.properties
+        applicationHref: https://api.stormpath.com/v1/applications/5ZgKzTewe54yoXwAc4ROPD
 
       clusters:
         foo:
