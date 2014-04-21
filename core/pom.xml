@@ -105,6 +105,22 @@
             <artifactId>logback-access</artifactId>
         </dependency>
 
+        <!-- Tests: -->
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+        </dependency>
+
     </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Allow for groovy tests: -->
+            <plugin>
+                <groupId>org.codehaus.gmaven</groupId>
+                <artifactId>gmaven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
