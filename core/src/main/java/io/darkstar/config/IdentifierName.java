@@ -1,8 +1,8 @@
 package io.darkstar.config;
 
-public class CanonicalName {
+public class IdentifierName {
 
-    public static String canonicalize(String s) {
+    public static String of(String s) {
 
         if (s == null || "".equals(s)) {
             return s;
