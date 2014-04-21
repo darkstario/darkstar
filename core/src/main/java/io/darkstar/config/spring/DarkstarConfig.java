@@ -249,13 +249,6 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         return new MetricRegistry();
     }
 
-    /*
-    @Bean
-    public DucksboardPoster ducksboardPoster() {
-        return new DucksboardPoster(ducksboardApiKey(), restTemplate());
-    }
-    */
-
     @Bean
     public Client stormpathClient() {
         StormpathConfig stormpath = stormpathConfig();
@@ -279,92 +272,6 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         application.getName();
         return application;
     }
-
-    /*@Bean
-    @Scope("prototype")
-    public FrontendHttpHandler frontendHttpHandler() {
-        return new FrontendHttpHandler();
-    }
-
-    @Bean
-    public KeyEntryFactory keyEntryFactory() {
-        return new BouncyCastleKeyEntryFactory();
-    }
-
-    @Bean
-    public KeyStore keyStore() throws Exception {
-
-        String name = get(String.class, YAML, "['http']['name']");
-
-        Random r = new SecureRandom();
-        byte[] bytes = new byte[32];
-        r.nextBytes(bytes);
-        byte[] base64Encoded = Base64.getEncoder().encode(bytes);
-        char[] randomPassword = new char[base64Encoded.length];
-        for (int i = base64Encoded.length; i-- > 0; ) {
-            randomPassword[i] = (char) (base64Encoded[i] & 0xff);
-        }
-
-        char[] password = "changeit".toCharArray();
-        KeyStore ks = KeyStore.getInstance("JKS");
-        ks.load(null);
-
-        KeyEntryFactory keyEntryFactory = keyEntryFactory();
-
-        //now load the keystore w/ the keys referenced in configuration:
-
-        //first, load the system-wide default:
-        TlsConfig tlsConfig = newInstance(TlsConfig.class, get(Object.class, YAML, "['http']['tls']"));
-        if (tlsConfig != null) {
-            KeyEntry keyEntry = keyEntryFactory.createKeyEntry(name, tlsConfig);
-            ks.setKeyEntry(name, keyEntry.getPrivateKey(), password, keyEntry.getCertificateChain());
-        }
-
-        //then load vhosts:
-        Map<String, Map> vhosts = get(Map.class, YAML, "['http']['vhosts']");
-        for (Map.Entry<String, Map> entry : vhosts.entrySet()) {
-            String vhostName = entry.getKey();
-            Map vhost = entry.getValue();
-            Object tls = vhost.get("tls");
-            if (tls != null) {
-                tlsConfig = newInstance(TlsConfig.class, tls);
-                KeyEntry keyEntry = keyEntryFactory.createKeyEntry(vhostName, tlsConfig);
-                ks.setKeyEntry(vhostName, keyEntry.getPrivateKey(), password, keyEntry.getCertificateChain());
-            }
-        }
-
-        return ks;
-    }
-
-    @Bean
-    public SSLContext sslContext() throws Exception {
-
-        KeyStore keyStore = keyStore();
-
-        KeyManagerFactory factory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        factory.init(keyStore, "changeit".toCharArray());
-
-        // Javadoc of SSLContext.init() states the first KeyManager implementing X509ExtendedKeyManager in the array is
-        // used. We duplicate this behaviour when picking the KeyManager to wrap around.
-        X509ExtendedKeyManager x509KeyManager = null;
-        for (KeyManager keyManager : factory.getKeyManagers()) {
-            if (keyManager instanceof X509ExtendedKeyManager) {
-                x509KeyManager = (X509ExtendedKeyManager) keyManager;
-            }
-        }
-
-        if (x509KeyManager == null) {
-            throw new Exception("KeyManagerFactory did not create an X509ExtendedKeyManager");
-        }
-
-        SniKeyManager sniKeyManager = new SniKeyManager(x509KeyManager);
-
-        SSLContext context = SSLContext.getInstance("TLS");
-        context.init(new KeyManager[]{sniKeyManager}, null, null);
-
-        return context;
-    }
-    */
 
     private static String applyUserHome(String path) {
         String toReplace = "${user.home}";

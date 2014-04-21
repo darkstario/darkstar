@@ -12,11 +12,23 @@ http:
 
   tls:
     port: 8443
-    cert: core/src/test/resources/example.com.pem.crt
-    key: core/src/test/resources/example.com.pem.key
+    #cert: core/src/test/resources/example.com.pem.crt
+    #key: core/src/test/resources/example.com.pem.key
 
   access_log:
     format: '%h %l %u [%t] "%r" %s %b "%i{Referer}" "%i{User-Agent}"'
+
+  clusters:
+    foo:
+      servers:
+        - 192.168.1.100: { weight: 5 }
+        - 192.168.1.101: { weight: 5 }
+        - 192.168.1.200
+        - 192.168.1.201
+    bar:
+      servers:
+        - 23.149.288.74
+        - 23.149.288.75
 
   vhosts:
 
@@ -27,23 +39,23 @@ http:
         cert: core/src/test/resources/vhost.com.pem.crt
         key: core/src/test/resources/vhost.com.pem.key
 
-      access_log: target/logs/vhosts/vhost.com/access.log
+      access log: target/logs/vhosts/vhost.com/access.log
 
       stormpath:
-        apiKeyFile: ${user.home}/.stormpath/apiKey.properties
-        applicationHref: https://api.stormpath.com/v1/applications/5ZgKzTewe54yoXwAc4ROPD
+        api key file: ${user.home}/.stormpath/apiKey.properties
+        application href: https://api.stormpath.com/v1/applications/5ZgKzTewe54yoXwAc4ROPD
 
-      cluster:
-        name: foo
-        servers:
-          - {weight: 5}
-          - {weight: 6, size: 42, list: [5, 3, 6]}
-          - 192.168.1.100: {weight: 5}
-          - 192.168.1.101: {weight: 5}
-          - 192.168.1.102
-          - 192.168.1.103
+      clusters:
+        foo:
+          servers:
+            - {weight: 5}
+            - {weight: 6, size: 42, list: [5, 3, 6]}
+            - 192.168.1.100: {weight: 5}
+            - 192.168.1.101: {weight: 5}
+            - 192.168.1.102
+            - 192.168.1.103
 
       routes:
         /:
           - stormpath_authc
-          - proxy_pass: http://192.168.1.232:8080
+          - proxy pass: http://foo:8080
