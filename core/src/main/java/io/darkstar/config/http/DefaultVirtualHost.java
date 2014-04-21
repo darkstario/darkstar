@@ -1,7 +1,6 @@
 package io.darkstar.config.http;
 
 import com.stormpath.sdk.lang.Assert;
-import io.darkstar.config.Cluster;
 import io.darkstar.config.DefaultContext;
 
 import java.util.LinkedHashMap;

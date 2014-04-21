@@ -1,5 +1,8 @@
 package io.darkstar.config;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 public class IdentifierName {
 
     public static String of(String s) {
@@ -36,5 +39,13 @@ public class IdentifierName {
 
         return sb.toString();
 
+    }
+
+    public static Set<String> setOf(String... strings) {
+        LinkedHashSet<String> set = new LinkedHashSet<>();
+        for(String s : strings) {
+            set.add(of(s));
+        }
+        return set;
     }
 }

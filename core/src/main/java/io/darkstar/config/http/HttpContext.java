@@ -1,6 +1,5 @@
 package io.darkstar.config.http;
 
-import io.darkstar.config.Cluster;
 import io.darkstar.config.Context;
 import io.darkstar.config.SystemContext;
 

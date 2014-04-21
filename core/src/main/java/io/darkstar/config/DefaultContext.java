@@ -20,7 +20,7 @@ public class DefaultContext<C extends Context> implements Context<C>, AttributeM
     }
 
     @Override
-    public final String name() {
+    public final String getName() {
         return this.name;
     }
 
@@ -39,7 +39,25 @@ public class DefaultContext<C extends Context> implements Context<C>, AttributeM
         return (T) this.attributes.put(name, value);
     }
 
+    public void setAttributes(Map<String,Object> attributes) {
+        this.attributes.clear();
+        this.attributes.putAll(attributes);
+    }
+
     public void putAttributes(Map<String,Object> attributes) {
         this.attributes.putAll(attributes);
+    }
+
+    public Map<String,Object> getAttributes() {
+        return this.attributes;
+    }
+
+    @Override
+    public String toString() {
+        Context parent = getParent();
+        if (parent != null) {
+            return parent.toString() + "/" + getName();
+        }
+        return getName();
     }
 }

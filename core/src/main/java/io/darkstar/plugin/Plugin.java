@@ -8,7 +8,7 @@ public interface Plugin {
 
     String getName();
 
-    Set<String> getSupportedAttributeNames();
+    Set<String> getDirectiveNames();
 
-    Object onConfigAttribute(String attributeName, Object configValue, Context applicableContext);
+    Object onConfigDirective(String directiveName, Object directiveValue, Context context);
 }

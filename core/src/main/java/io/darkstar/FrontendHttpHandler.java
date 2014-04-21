@@ -2,12 +2,7 @@ package io.darkstar;
 
 import com.google.common.base.Charsets;
 import com.google.common.eventbus.EventBus;
-import com.stormpath.sdk.application.Application;
-import com.stormpath.sdk.authc.AuthenticationResult;
-import com.stormpath.sdk.authc.UsernamePasswordRequest;
-import com.stormpath.sdk.resource.ResourceException;
 import io.darkstar.config.Host;
-import io.darkstar.config.json.StormpathConfig;
 import io.darkstar.config.json.VirtualHostConfig;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -28,7 +23,6 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.shiro.codec.Base64;
 import org.apache.shiro.util.AntPathMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,12 +52,6 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
     @Autowired
     private EventBus eventBus;
-
-    @Autowired
-    private StormpathConfig stormpathConfig;
-
-    @Autowired
-    private Application application;
 
     @Resource
     @Qualifier("virtualHosts")
@@ -220,12 +208,14 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             //check to see if authc required:
             boolean authcRequired = false;
             String decodedPath = requestUri.getPath();
+            /*
             for (String pattern : stormpathConfig.getAuthenticate()) {
                 if (pathMatcher.match(pattern, decodedPath)) {
                     authcRequired = true;
                     break;
                 }
             }
+            */
 
             String authzHeaderValue = null;
             boolean xForwardedForSet = false;
@@ -278,6 +268,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
 
             boolean writeAuthzHeader = authzHeaderValue != null;
 
+            /*
             if (authcRequired) {
 
                 if (authzHeaderValue != null && authzHeaderValue.toLowerCase().trim().startsWith("basic ")) {
@@ -321,6 +312,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                     return;
                 }
             }
+            */
 
             if (writeAuthzHeader) {
                 modifiedRequest.headers().set(AUTHORIZATION, authzHeaderValue);
@@ -414,10 +406,12 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         return String.valueOf(o).getBytes(Charsets.UTF_8);
     }
 
+    /*
     private void sendBasicAuthcChallenge(ChannelHandlerContext ctx) {
         String wwwAuthcValue = "BASIC realm=\"" + this.application.getName() + "\"";
         sendError(ctx, HttpResponseStatus.UNAUTHORIZED, wwwAuthcValue);
     }
+    */
 
     private static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status, /*HACK*/ String wwwAuthcValue) {
 

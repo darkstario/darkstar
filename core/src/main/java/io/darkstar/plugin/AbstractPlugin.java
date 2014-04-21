@@ -15,37 +15,37 @@ public abstract class AbstractPlugin implements Plugin {
     }
 
     @Override
-    public Object onConfigAttribute(String attributeName, Object configValue, Context applicableContext) {
-        if (!getSupportedAttributeNames().contains(attributeName)) {
-            return configValue;
+    public Object onConfigDirective(String directiveName, Object directiveValue, Context context) {
+        if (!getDirectiveNames().contains(directiveName)) {
+            return directiveValue;
         }
 
-        if (applicableContext instanceof SystemContext) {
-            return onSystemConfigAttribute(attributeName, configValue, (SystemContext)applicableContext);
-        } else if (applicableContext instanceof HttpContext) {
-            return onHttpConfigAttribute(attributeName, configValue, (HttpContext)applicableContext);
-        } else if (applicableContext instanceof VirtualHost) {
-            return onVirtualHostConfigAttribute(attributeName, configValue, (VirtualHost) applicableContext);
-        } else if (applicableContext instanceof Route) {
-            return onRouteConfigAttribute(attributeName, configValue, (Route)applicableContext);
+        if (context instanceof SystemContext) {
+            return onSystemDirective(directiveName, directiveValue, (SystemContext) context);
+        } else if (context instanceof HttpContext) {
+            return onHttpDirective(directiveName, directiveValue, (HttpContext) context);
+        } else if (context instanceof VirtualHost) {
+            return onVirtualHostDirective(directiveName, directiveValue, (VirtualHost) context);
+        } else if (context instanceof Route) {
+            return onRouteDirective(directiveName, directiveValue, (Route) context);
         }
 
-        return configValue;
+        return directiveValue;
     }
 
-    protected Object onSystemConfigAttribute(String attributeName, Object configValue, SystemContext ctx) {
-        return configValue;
+    protected Object onSystemDirective(String directiveName, Object directiveValue, SystemContext ctx) {
+        return directiveValue;
     }
 
-    protected Object onHttpConfigAttribute(String attributeName, Object configValue, HttpContext ctx) {
-        return configValue;
+    protected Object onHttpDirective(String directiveName, Object directiveValue, HttpContext ctx) {
+        return directiveValue;
     }
 
-    protected Object onVirtualHostConfigAttribute(String attributeName, Object configValue, VirtualHost applicableContext) {
-        return configValue;
+    protected Object onVirtualHostDirective(String directiveName, Object directiveValue, VirtualHost vhost) {
+        return directiveValue;
     }
 
-    protected Object onRouteConfigAttribute(String attributeName, Object configValue, Route applicableContext) {
-        return configValue;
+    protected Object onRouteDirective(String directiveName, Object directiveValue, Route route) {
+        return directiveValue;
     }
 }

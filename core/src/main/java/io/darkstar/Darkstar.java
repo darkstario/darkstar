@@ -1,5 +1,6 @@
 package io.darkstar;
 
+import com.stormpath.sdk.lang.Assert;
 import io.darkstar.config.Host;
 import io.darkstar.tls.TlsFrontendInitializer;
 import io.netty.bootstrap.ServerBootstrap;
@@ -17,6 +18,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.Map;
 
+@SuppressWarnings("unchecked")
 public class Darkstar {
 
     private static final Logger log = LoggerFactory.getLogger(Darkstar.class);
@@ -24,7 +26,7 @@ public class Darkstar {
     private final AnnotationConfigApplicationContext appCtx;
     private final long startMillis;
 
-    public static Map YAML;
+    public static Map<String, Object> YAML;
 
     private Darkstar(long startMillis) {
         this.startMillis = startMillis;
@@ -37,7 +39,6 @@ public class Darkstar {
     public void run() throws Exception {
 
         final Host host = appCtx.getBean("defaultHost", Host.class);
-        System.out.println("defaultHost: " + host);
 
         // Configure the bootstrap.
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
@@ -97,8 +98,9 @@ public class Darkstar {
         yamlFilePath = applyUserHome(yamlFilePath);
 
         Yaml yaml = new Yaml();
-        Map m = (Map) yaml.load(new FileReader(new File(yamlFilePath)));
-        YAML = m;
+        Object o = yaml.load(new FileReader(new File(yamlFilePath)));
+        Assert.isInstanceOf(Map.class, o, "Invalid YAML configuration: no directives found.");
+        YAML = (Map<String, Object>) o;
 
         try {
             new Darkstar(startupMillis).run();

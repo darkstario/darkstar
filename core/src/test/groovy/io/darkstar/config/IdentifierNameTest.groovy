@@ -15,6 +15,5 @@ class IdentifierNameTest {
         assertEquals IdentifierName.of('.whatever.com'), '.whatever.com'
         assertEquals IdentifierName.of('*.whatever.com'), '*.whatever.com'
         assertEquals IdentifierName.of('foo.whatever.com'), 'foo.whatever.com'
-
     }
 }

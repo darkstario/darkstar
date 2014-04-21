@@ -1,10 +1,10 @@
 package io.darkstar.plugin.http;
 
-import io.darkstar.config.http.DefaultVirtualHost;
 import io.darkstar.config.http.HttpContext;
 import io.darkstar.config.http.VirtualHost;
 import io.darkstar.plugin.AbstractPlugin;
 import io.darkstar.plugin.stereotype.Plugin;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -18,24 +18,28 @@ public class VirtualHostsPlugin extends AbstractPlugin {
 
     private static final Set<String> NAMES = new HashSet<>(Arrays.asList("vhosts"));
 
+    @Autowired
+    private VirtualHostPlugin vhostPlugin;
+
     @Override
-    public Set<String> getSupportedAttributeNames() {
+    public Set<String> getDirectiveNames() {
         return NAMES;
     }
 
     @Override
-    protected Object onHttpConfigAttribute(String attributeName, Object configValue, HttpContext ctx) {
+    protected Object onHttpDirective(String directiveName, Object directiveValue, HttpContext ctx) {
 
-        Map<String, Map> vhostDefinitions = (Map<String, Map>) configValue;
+        Map<String, Map> vhostDefinitions = (Map<String, Map>) directiveValue;
 
         Map<String, VirtualHost> converted = new LinkedHashMap<>();
 
         //convert the definitions into VirtualHost objects
         for (Map.Entry<String, Map> entry : vhostDefinitions.entrySet()) {
+
             String vhostName = entry.getKey();
             Map vhostAttributes = entry.getValue();
-            DefaultVirtualHost vhost = new DefaultVirtualHost(vhostName, ctx);
-            vhost.putAttributes(vhostAttributes);
+
+            VirtualHost vhost = (VirtualHost) vhostPlugin.onHttpDirective(vhostName, vhostAttributes, ctx);
 
             converted.put(vhostName, vhost);
         }

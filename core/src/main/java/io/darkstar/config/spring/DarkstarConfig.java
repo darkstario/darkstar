@@ -14,9 +14,7 @@ import io.darkstar.config.HostFactory;
 import io.darkstar.config.json.LogConfig;
 import io.darkstar.config.json.StormpathConfig;
 import io.darkstar.config.json.SystemLogConfig;
-import io.darkstar.lang.Objects;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
@@ -44,6 +42,8 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
 
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+
+        /*
 
         BeanDefinitionFactory<SystemLogConfig> systemLogBeanDefinitionFactory = systemLogBeanDefinitionFactory();
 
@@ -93,7 +93,7 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
                     registry.registerBeanDefinition(name, defs.get(name));
                 }
             }
-        }
+        } */
     }
 
     @Override
