@@ -22,21 +22,6 @@ public class TlsFrontendInitializer extends FrontendInitializer {
 
         SSLEngine engine = sslContext.createSSLEngine();
         engine.setUseClientMode(false);
-
-        String[] suites = engine.getSupportedCipherSuites();
-        StringBuilder sb = new StringBuilder("Supported Cipher Suites:").append("\n");
-        for(String s : suites) {
-            sb.append(s).append("\n");
-        }
-        System.out.println(sb.toString());
-
-        suites = engine.getEnabledCipherSuites();
-        sb = new StringBuilder("ENABLED Cipher Suites:").append("\n");
-        for(String s : suites) {
-            sb.append(s).append("\n");
-        }
-        System.out.println(sb.toString());
-
         p.addLast("ssl", new SslHandler(engine));
 
         initPipeline(p);
