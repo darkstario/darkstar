@@ -1,6 +1,8 @@
 package io.darkstar.plugin;
 
+import io.darkstar.config.ContextAttribute;
 import io.darkstar.config.IdentifierName;
+import io.darkstar.config.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanInitializationException;
@@ -19,6 +21,7 @@ public class DefaultPluginManager implements PluginManager, InitializingBean {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultPluginManager.class);
 
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     @Autowired
     private Collection<Plugin> plugins;
 
@@ -33,26 +36,29 @@ public class DefaultPluginManager implements PluginManager, InitializingBean {
 
         for (Plugin plugin : plugins) {
 
-            Set<String> directiveNames = plugin.getDirectiveNames();
-            if (CollectionUtils.isEmpty(directiveNames)) {
+            Map<String,Directive> directives = plugin.getDirectives();
+
+            if (CollectionUtils.isEmpty(directives)) {
                 continue;
             }
 
-            for(final String directiveName : directiveNames) {
+            for(final Map.Entry<String,Directive> entry : directives.entrySet()) {
 
-                String canonicalDirectiveName = IdentifierName.of(directiveName);
+                String name = entry.getKey();
 
-                Plugin existing = registeredPlugins.get(canonicalDirectiveName);
+                String canonicalName = IdentifierName.of(name);
+
+                Plugin existing = registeredPlugins.get(canonicalName);
 
                 if (existing != null) {
                     String msg = "Plugin registration collision: The " + plugin.getName() + " plugin claims to " +
-                            "support '" + directiveName + "' directives, but the " + existing.getName() + " plugin " +
+                            "support '" + name + "' directives, but the " + existing.getName() + " plugin " +
                             "has already been registered to support this directive name.  You must remove one of " +
                             "these plugins to avoid this conflict.";
                     throw new BeanInitializationException(msg);
                 }
 
-                registeredPlugins.put(canonicalDirectiveName, plugin);
+                registeredPlugins.put(canonicalName, plugin);
             }
         }
 
@@ -60,8 +66,8 @@ public class DefaultPluginManager implements PluginManager, InitializingBean {
     }
 
     @Override
-    public Plugin getPluginForDirective(String directiveName) {
-        String canonicalDirectiveName = IdentifierName.of(directiveName);
-        return this.registeredPlugins.get(canonicalDirectiveName);
+    public Plugin getPlugin(ContextAttribute attribute) {
+        String canonicalName = IdentifierName.of(attribute.getName());
+        return this.registeredPlugins.get(canonicalName);
     }
 }

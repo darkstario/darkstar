@@ -1,44 +1,49 @@
 package io.darkstar.plugin.log;
 
 import com.stormpath.sdk.lang.Assert;
-import io.darkstar.config.IdentifierName;
+import io.darkstar.config.ContextAttribute;
 import io.darkstar.config.http.VirtualHost;
 import io.darkstar.config.json.LogConfig;
 import io.darkstar.plugin.AbstractPlugin;
+import io.darkstar.plugin.Directive;
+import io.darkstar.plugin.Directives;
 import io.darkstar.plugin.stereotype.Plugin;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.util.CollectionUtils;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 @SuppressWarnings("unchecked")
 @Plugin
 public class AccessLogPlugin extends AbstractPlugin {
 
-    private static final Set<String> NAMES = IdentifierName.setOf("accessLog");
+    public static final Map<String, Directive> DIRECTIVES = Directives.builder()
+            .add("accessLog", VirtualHost.class).buildMap();
 
     @Override
-    public Set<String> getDirectiveNames() {
-        return NAMES;
+    public Map<String, Directive> getDirectives() {
+        return DIRECTIVES;
     }
 
     @Override
-    protected Object onVirtualHostDirective(String directiveName, Object directiveValue, VirtualHost vhost) {
+    protected Object onVirtualHostAttribute(ContextAttribute<VirtualHost> attribute) {
 
-        Map<String,Object> effective = new HashMap<>();
+        Map<String, Object> effective = new HashMap<>();
 
-        Map<String,Object> parentProps = vhost.getParent().getAttribute("accessLog"); //might need to merge:
+        VirtualHost vhost = attribute.getContext();
+        Object attributeValue = attribute.getValue();
+
+        Map<String, Object> parentProps = vhost.getParent().getAttribute("accessLog"); //might need to merge:
         if (!CollectionUtils.isEmpty(parentProps)) {
             effective.putAll(parentProps);
         }
 
-        if (directiveValue instanceof String) { //single value support - default to the 'path' property:
-            effective.put("path", directiveValue);
+        if (attributeValue instanceof String) { //single value support - default to the 'path' property:
+            effective.put("path", attributeValue);
         } else {
-            Assert.isInstanceOf(Map.class, directiveValue, "Unsupported access log directive value: " + directiveValue);
-            Map<String,Object> props = (Map<String,Object>)directiveValue;
+            Assert.isInstanceOf(Map.class, attributeValue, "Unsupported access log directive value: " + attributeValue);
+            Map<String, Object> props = (Map<String, Object>) attributeValue;
             effective.putAll(props);
         }
 

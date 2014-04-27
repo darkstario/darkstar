@@ -1,24 +1,27 @@
 package io.darkstar.plugin.stormpath;
 
-import io.darkstar.config.IdentifierName;
+import io.darkstar.config.ContextAttribute;
 import io.darkstar.config.http.VirtualHost;
 import io.darkstar.plugin.AbstractPlugin;
+import io.darkstar.plugin.Directive;
+import io.darkstar.plugin.Directives;
 import io.darkstar.plugin.stereotype.Plugin;
 
-import java.util.Set;
+import java.util.Map;
 
 @Plugin
 public class StormpathPlugin extends AbstractPlugin {
 
-    private static final Set<String> NAMES = IdentifierName.setOf("stormpath");
+    public static final Map<String, Directive> DIRECTIVES = Directives.builder()
+            .add("stormpath", VirtualHost.class).buildMap();
 
     @Override
-    public Set<String> getDirectiveNames() {
-        return NAMES;
+    public Map<String, Directive> getDirectives() {
+        return DIRECTIVES;
     }
 
     @Override
-    protected Object onVirtualHostDirective(String directiveName, Object directiveValue, VirtualHost vhost) {
-        return directiveValue;
+    protected Object onVirtualHostAttribute(ContextAttribute<VirtualHost> attribute) {
+        return attribute.getValue(); //TODO: implement
     }
 }

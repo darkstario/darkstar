@@ -122,6 +122,7 @@ public class YamlBeanDefinitionReader extends AbstractBeanDefinitionReader {
      * Actually load bean definitions from the specified YAML file.
      *
      * @param yaml     the Yaml instance to use to load content
+     * @param is       the InputStream to read
      * @param resource the resource descriptor for the YAML file
      * @return the number of bean definitions found
      * @throws BeanDefinitionStoreException in case of loading or parsing errors
@@ -165,6 +166,7 @@ public class YamlBeanDefinitionReader extends AbstractBeanDefinitionReader {
      * <p>The default implementation instantiates the specified
      * {@link #setContentReaderClass(Class) contentReaderClass}</p>
      *
+     * @return new BeanDefinitionContentReader instance.
      * @see #setContentReaderClass(Class)
      */
     protected BeanDefinitionContentReader createBeanDefinitionContentReader() {
@@ -173,6 +175,9 @@ public class YamlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
     /**
      * Create the {@link YamlReaderContext} to pass over to the yaml reader.
+     *
+     * @param resource the resource for which a context will be created.
+     * @return the {@link YamlReaderContext} to pass over to the yaml reader.
      */
     public YamlReaderContext createReaderContext(Resource resource) {
         return new YamlReaderContext(resource, this.problemReporter, this.eventListener, this.sourceExtractor, this);

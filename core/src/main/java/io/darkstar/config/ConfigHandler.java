@@ -38,34 +38,36 @@ public class ConfigHandler implements InitializingBean {
 
         for (Map.Entry<String, Object> entry : config.entrySet()) {
 
-            final String directiveName = entry.getKey();
+            final String attributeName = entry.getKey();
+            final String canonicalName = IdentifierName.of(attributeName);
             final Object value = entry.getValue();
+
+            final ContextAttribute attribute = new DefaultContextAttribute(canonicalName, value, context);
 
             boolean complex = value instanceof Map || value instanceof Collection;
 
-            Plugin plugin = pluginManager.getPluginForDirective(directiveName);
+            Plugin plugin = pluginManager.getPlugin(attribute);
 
             Object effectiveValue;
 
             if (plugin != null) {
-                effectiveValue = plugin.onConfigDirective(directiveName, value, context);
+                effectiveValue = plugin.onConfigAttribute(attribute);
             } else {
                 if (complex) {
                     //plugins must process complex attributes:
-                    String msg = "The '" + directiveName + "' directive is not supported in " +
+                    String msg = "The '" + attributeName + "' attribute is not supported in " +
                             context.getName() + " context configuration by any registered plugins.";
                     throw new BeanInitializationException(msg);
                 }
                 effectiveValue = value;
             }
 
-
-            effectiveConfig.put(directiveName, effectiveValue);
+            effectiveConfig.put(attributeName, effectiveValue);
 
             if (effectiveValue instanceof Context) {
                 //We have a new Context! Yippee!
 
-                DefaultContext child = (DefaultContext)effectiveValue;
+                DefaultContext child = (DefaultContext) effectiveValue;
 
                 //all contexts must be a map of directives:
                 Map<String, Object> originalAttributes = (Map<String, Object>) value;

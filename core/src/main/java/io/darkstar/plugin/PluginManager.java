@@ -1,6 +1,8 @@
 package io.darkstar.plugin;
 
+import io.darkstar.config.ContextAttribute;
+
 public interface PluginManager {
 
-    Plugin getPluginForDirective(String directiveName);
+    Plugin getPlugin(ContextAttribute attribute);
 }

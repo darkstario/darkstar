@@ -1,14 +1,19 @@
 package io.darkstar.plugin;
 
-import io.darkstar.config.Context;
+import io.darkstar.config.ContextAttribute;
 
-import java.util.Set;
+import java.util.Map;
 
 public interface Plugin {
 
     String getName();
 
-    Set<String> getDirectiveNames();
+    /**
+     * Name to Directive map.
+     *
+     * @return Name to Directive map.
+     */
+    Map<String, Directive> getDirectives();
 
-    Object onConfigDirective(String directiveName, Object directiveValue, Context context);
+    Object onConfigAttribute(ContextAttribute attribute);
 }

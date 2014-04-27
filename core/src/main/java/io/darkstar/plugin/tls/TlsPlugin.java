@@ -1,38 +1,43 @@
 package io.darkstar.plugin.tls;
 
-import io.darkstar.config.IdentifierName;
+import io.darkstar.config.ContextAttribute;
 import io.darkstar.config.http.VirtualHost;
 import io.darkstar.config.json.TlsConfig;
 import io.darkstar.plugin.AbstractPlugin;
+import io.darkstar.plugin.Directive;
+import io.darkstar.plugin.Directives;
 import io.darkstar.plugin.stereotype.Plugin;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.util.CollectionUtils;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 @SuppressWarnings("unchecked")
 @Plugin
 public class TlsPlugin extends AbstractPlugin {
 
-    private static final Set<String> NAMES = IdentifierName.setOf("tls");
+    public static final Map<String, Directive> DIRECTIVES = Directives.builder().add("tls", VirtualHost.class).buildMap();
 
     @Override
-    public Set<String> getDirectiveNames() {
-        return NAMES;
+    public Map<String, Directive> getDirectives() {
+        return DIRECTIVES;
     }
 
     @Override
-    protected Object onVirtualHostDirective(String directiveName, Object directiveValue, VirtualHost vhost) {
-        if (!(directiveValue instanceof Map)) {
-            throw new IllegalArgumentException("Unsupported tls directive value: " + directiveValue);
+    protected Object onVirtualHostAttribute(ContextAttribute<VirtualHost> attribute) {
+
+        Object value = attribute.getValue();
+        VirtualHost vhost = attribute.getContext();
+
+        if (!(value instanceof Map)) {
+            throw new IllegalArgumentException("Unsupported tls directive value: " + value);
         }
 
-        Map<String,Object> props = (Map<String,Object>)directiveValue;
-        Map<String,Object> effective = new HashMap<>();
+        Map<String, Object> props = (Map<String, Object>) value;
+        Map<String, Object> effective = new HashMap<>();
 
-        Map<String,Object> parentProps = vhost.getParent().getAttribute("tls"); //might need to merge:
+        Map<String, Object> parentProps = vhost.getParent().getAttribute("tls"); //might need to merge:
         if (!CollectionUtils.isEmpty(parentProps)) {
             effective.putAll(parentProps);
         }

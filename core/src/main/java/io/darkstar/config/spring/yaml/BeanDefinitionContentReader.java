@@ -20,6 +20,8 @@ public interface BeanDefinitionContentReader {
      * Set the Environment to use when reading bean definitions.
      * <p>Used for evaluating profile information to determine whether a document/element should be included or
      * ignored.</p>
+     *
+     * @param environment the Environment to use when reading bean definitions.
      */
     void setEnvironment(Environment environment);
 
