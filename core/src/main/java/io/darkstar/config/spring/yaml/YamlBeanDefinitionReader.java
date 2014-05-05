@@ -1,5 +1,8 @@
 package io.darkstar.config.spring.yaml;
 
+import io.darkstar.config.yaml.DefaultNodeFactory;
+import io.darkstar.config.yaml.Node;
+import io.darkstar.config.yaml.NodeFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.parsing.EmptyReaderEventListener;
@@ -23,13 +26,17 @@ import java.util.Set;
 
 public class YamlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
-    private Class<? extends BeanDefinitionContentReader> contentReaderClass = DefaultBeanDefinitionContentReader.class;
+    private Class<? extends BeanDefinitionDocumentReader> contentReaderClass = DefaultBeanDefinitionDocumentReader.class;
+
+    private NodeFactory nodeFactory = new DefaultNodeFactory();
 
     private ProblemReporter problemReporter = new FailFastProblemReporter();
 
     private ReaderEventListener eventListener = new EmptyReaderEventListener();
 
     private SourceExtractor sourceExtractor = new NullSourceExtractor();
+
+    private BeanDefinitionParserResolver beanDefinitionParserResolver;
 
     private final ThreadLocal<Set<EncodedResource>> resourcesCurrentlyBeingLoaded =
             new NamedThreadLocal<>("YAML bean definition resources currently being loaded");
@@ -44,15 +51,15 @@ public class YamlBeanDefinitionReader extends AbstractBeanDefinitionReader {
     }
 
     /**
-     * Specify the {@link BeanDefinitionContentReader} implementation to use,
+     * Specify the {@link BeanDefinitionDocumentReader} implementation to use,
      * responsible for the actual reading of the YAML content document.
-     * <p>The default is {@link DefaultBeanDefinitionContentReader}.
+     * <p>The default is {@link DefaultBeanDefinitionDocumentReader}.
      *
-     * @param contentReaderClass the desired BeanDefinitionContentReader implementation class
+     * @param contentReaderClass the desired BeanDefinitionDocumentReader implementation class
      */
-    public void setContentReaderClass(Class<? extends BeanDefinitionContentReader> contentReaderClass) {
-        Assert.isTrue(contentReaderClass != null && BeanDefinitionContentReader.class.isAssignableFrom(contentReaderClass),
-                "contentReaderClass must be an implementation of the BeanDefinitionContentReader interface");
+    public void setContentReaderClass(Class<? extends BeanDefinitionDocumentReader> contentReaderClass) {
+        Assert.isTrue(contentReaderClass != null && BeanDefinitionDocumentReader.class.isAssignableFrom(contentReaderClass),
+                "contentReaderClass must be an implementation of the BeanDefinitionDocumentReader interface");
         this.contentReaderClass = contentReaderClass;
     }
 
@@ -132,7 +139,8 @@ public class YamlBeanDefinitionReader extends AbstractBeanDefinitionReader {
     protected int doLoadBeanDefinitions(Yaml yaml, InputStream is, Resource resource) throws BeanDefinitionStoreException {
         try {
             Object content = loadYamlContent(yaml, is, resource);
-            return registerBeanDefinitions(content, resource);
+            Node root = nodeFactory.createGraph("main", content);
+            return registerBeanDefinitions(root, resource);
         } catch (BeanDefinitionStoreException ex) {
             throw ex;
         } catch (Throwable ex) {
@@ -151,25 +159,25 @@ public class YamlBeanDefinitionReader extends AbstractBeanDefinitionReader {
      * @throws BeanDefinitionStoreException in case of parsing errors
      * @see #loadBeanDefinitions
      * @see #setContentReaderClass(Class)
-     * @see BeanDefinitionContentReader#registerBeanDefinitions
+     * @see BeanDefinitionDocumentReader#registerBeanDefinitions
      */
-    public int registerBeanDefinitions(Object content, Resource resource) throws BeanDefinitionStoreException {
-        BeanDefinitionContentReader contentReader = createBeanDefinitionContentReader();
-        contentReader.setEnvironment(this.getEnvironment());
+    public int registerBeanDefinitions(Node content, Resource resource) throws BeanDefinitionStoreException {
+        BeanDefinitionDocumentReader documentReader = createBeanDefinitionContentReader();
+        documentReader.setEnvironment(this.getEnvironment());
         int countBefore = getRegistry().getBeanDefinitionCount();
-        contentReader.registerBeanDefinitions(content, createReaderContext(resource));
+        documentReader.registerBeanDefinitions(content, createReaderContext(resource));
         return getRegistry().getBeanDefinitionCount() - countBefore;
     }
 
     /**
-     * Create the {@link BeanDefinitionContentReader} to use for actually reading bean definitions from a YAML document.
+     * Create the {@link BeanDefinitionDocumentReader} to use for actually reading bean definitions from a YAML document.
      * <p>The default implementation instantiates the specified
      * {@link #setContentReaderClass(Class) contentReaderClass}</p>
      *
-     * @return new BeanDefinitionContentReader instance.
+     * @return new BeanDefinitionDocumentReader instance.
      * @see #setContentReaderClass(Class)
      */
-    protected BeanDefinitionContentReader createBeanDefinitionContentReader() {
+    protected BeanDefinitionDocumentReader createBeanDefinitionContentReader() {
         return BeanUtils.instantiateClass(this.contentReaderClass);
     }
 
@@ -180,6 +188,18 @@ public class YamlBeanDefinitionReader extends AbstractBeanDefinitionReader {
      * @return the {@link YamlReaderContext} to pass over to the yaml reader.
      */
     public YamlReaderContext createReaderContext(Resource resource) {
-        return new YamlReaderContext(resource, this.problemReporter, this.eventListener, this.sourceExtractor, this);
+        return new YamlReaderContext(resource, this.problemReporter, this.eventListener,
+                this.sourceExtractor, this, getBeanDefinitionParserResolver());
+    }
+
+    public BeanDefinitionParserResolver getBeanDefinitionParserResolver() {
+        if (this.beanDefinitionParserResolver == null) {
+            this.beanDefinitionParserResolver = createDefaultBeanDefinitionParserResolver();
+        }
+        return this.beanDefinitionParserResolver;
+    }
+
+    private BeanDefinitionParserResolver createDefaultBeanDefinitionParserResolver() {
+        return new DefaultBeanDefinitionParserResolver(getResourceLoader().getClassLoader());
     }
 }

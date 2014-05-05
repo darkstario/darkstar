@@ -2,11 +2,15 @@ package io.darkstar.plugin;
 
 import io.darkstar.config.Context;
 import io.darkstar.config.ContextAttribute;
+import io.darkstar.config.DefaultContextAttribute;
+import io.darkstar.config.yaml.Node;
 import io.darkstar.config.SystemContext;
 import io.darkstar.config.http.HttpContext;
 import io.darkstar.config.http.Route;
 import io.darkstar.config.http.VirtualHost;
 import org.springframework.util.StringUtils;
+
+import java.util.Map;
 
 public abstract class AbstractPlugin implements Plugin {
 
@@ -35,6 +39,18 @@ public abstract class AbstractPlugin implements Plugin {
         }
 
         return attribute.getValue();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Object onConfigNode(Node node) {
+        return onConfigAttribute(new DefaultContextAttribute(node.getName(), node.getValue(), node.getContext()));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean supports(Node node) {
+        return supports(new DefaultContextAttribute(node.getName(), node.getValue(), node.getContext()));
     }
 
     protected boolean supports(ContextAttribute attribute) {

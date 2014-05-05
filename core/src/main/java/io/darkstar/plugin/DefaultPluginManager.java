@@ -2,7 +2,7 @@ package io.darkstar.plugin;
 
 import io.darkstar.config.ContextAttribute;
 import io.darkstar.config.IdentifierName;
-import io.darkstar.config.Node;
+import io.darkstar.config.yaml.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanInitializationException;
@@ -68,6 +68,12 @@ public class DefaultPluginManager implements PluginManager, InitializingBean {
     @Override
     public Plugin getPlugin(ContextAttribute attribute) {
         String canonicalName = IdentifierName.of(attribute.getName());
+        return this.registeredPlugins.get(canonicalName);
+    }
+
+    @Override
+    public Plugin getPlugin(Node node) {
+        String canonicalName = node.getName();
         return this.registeredPlugins.get(canonicalName);
     }
 }

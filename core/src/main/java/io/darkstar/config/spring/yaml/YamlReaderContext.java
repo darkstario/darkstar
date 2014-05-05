@@ -13,9 +13,14 @@ public class YamlReaderContext extends ReaderContext {
 
     private final YamlBeanDefinitionReader reader;
 
-    public YamlReaderContext(Resource resource, ProblemReporter problemReporter, ReaderEventListener eventListener, SourceExtractor sourceExtractor, YamlBeanDefinitionReader reader) {
+    private final BeanDefinitionParserResolver beanDefinitionParserResolver;
+
+    public YamlReaderContext(Resource resource, ProblemReporter problemReporter,
+                             ReaderEventListener eventListener, SourceExtractor sourceExtractor,
+                             YamlBeanDefinitionReader reader, BeanDefinitionParserResolver beanDefinitionParserResolver) {
         super(resource, problemReporter, eventListener, sourceExtractor);
         this.reader = reader;
+        this.beanDefinitionParserResolver = beanDefinitionParserResolver;
     }
 
     public final YamlBeanDefinitionReader getReader() {
@@ -32,6 +37,10 @@ public class YamlReaderContext extends ReaderContext {
 
     public final ClassLoader getBeanClassLoader() {
         return this.reader.getBeanClassLoader();
+    }
+
+    public final BeanDefinitionParserResolver getBeanDefinitionParserResolver() {
+        return this.beanDefinitionParserResolver;
     }
 
     public String generateBeanName(BeanDefinition beanDefinition) {

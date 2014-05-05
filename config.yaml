@@ -6,14 +6,14 @@ system_log:
 
 http:
 
-  name: localhost
+  connectors:
+    http: 8080
+    https:
+      port: 8443
+      tls:
+        cert: core/src/test/resources/example.com.crt.pem
+        key: core/src/test/resources/example.com.key.pem
 
-  port: 5000
-
-  tls:
-    port: 8443
-    #cert: core/src/test/resources/example.com.pem.crt
-    #key: core/src/test/resources/example.com.pem.key
 
   access_log:
     format: '%h %l %u [%t] "%r" %s %b "%i{Referer}" "%i{User-Agent}"'
@@ -40,10 +40,6 @@ http:
         key: core/src/test/resources/vhost.com.pem.key
 
       access log: target/logs/vhosts/vhost.com/access.log
-
-      stormpath:
-        apiKeyFile: ${user.home}/.stormpath/apiKey.properties
-        applicationHref: https://api.stormpath.com/v1/applications/5ZgKzTewe54yoXwAc4ROPD
 
       clusters:
         foo:

@@ -1,22 +1,9 @@
 package io.darkstar;
 
-import com.stormpath.sdk.lang.Assert;
-import io.darkstar.config.Host;
-import io.darkstar.tls.TlsFrontendInitializer;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.darkstar.net.ServerChannelManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.yaml.snakeyaml.Yaml;
-
-import java.io.File;
-import java.io.FileReader;
-import java.util.Map;
 
 @SuppressWarnings("unchecked")
 public class Darkstar {
@@ -26,7 +13,7 @@ public class Darkstar {
     private final AnnotationConfigApplicationContext appCtx;
     private final long startMillis;
 
-    public static Map<String, Object> YAML;
+    public static String YAML_FILE_PATH; //todo remove
 
     private Darkstar(long startMillis) {
         this.startMillis = startMillis;
@@ -37,44 +24,13 @@ public class Darkstar {
     }
 
     public void run() throws Exception {
-
-        final Host host = appCtx.getBean("defaultHost", Host.class);
-
-        // Configure the bootstrap.
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
-
-            Map http = (Map) YAML.get("http");
-            Map tls = (Map) http.get("tls");
-            if (tls != null) {
-                int tlsPort = (int) tls.get("port");
-                ServerBootstrap ssl = new ServerBootstrap();
-                ssl.option(ChannelOption.SO_BACKLOG, 1024);
-                ssl.group(bossGroup, workerGroup)
-                        .channel(NioServerSocketChannel.class)
-                        .childHandler(appCtx.getBean("tlsFrontendInitializer", TlsFrontendInitializer.class))
-                        .childOption(ChannelOption.AUTO_READ, false)
-                        .bind(host.getName(), tlsPort);
-            }
-
-            ServerBootstrap b = new ServerBootstrap();
-            b.option(ChannelOption.SO_BACKLOG, 1024);
-            ChannelFuture f = b.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(appCtx.getBean("frontendInitializer", FrontendInitializer.class))
-                    .childOption(ChannelOption.AUTO_READ, false)
-                    .bind(host.getName(), host.getPort());
-
+            ServerChannelManager serverChannelManager = appCtx.getBean(ServerChannelManager.class);
+            serverChannelManager.init();
             long duration = System.currentTimeMillis() - this.startMillis;
-
-            log.info("Darkstar started in {} ms. Listening on {}...", duration, host);
-
-            f.sync().channel().closeFuture().sync();
-
+            log.info("Darkstar started in {} ms.", duration);
+            serverChannelManager.sync();
         } finally {
-            workerGroup.shutdownGracefully().syncUninterruptibly();
-            bossGroup.shutdownGracefully().syncUninterruptibly();
             appCtx.close();
         }
     }
@@ -95,12 +51,7 @@ public class Darkstar {
             return;
         }
 
-        yamlFilePath = applyUserHome(yamlFilePath);
-
-        Yaml yaml = new Yaml();
-        Object o = yaml.load(new FileReader(new File(yamlFilePath)));
-        Assert.isInstanceOf(Map.class, o, "Invalid YAML configuration: no directives found.");
-        YAML = (Map<String, Object>) o;
+        YAML_FILE_PATH = applyUserHome(yamlFilePath);
 
         try {
             new Darkstar(startupMillis).run();

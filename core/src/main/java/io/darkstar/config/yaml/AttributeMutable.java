@@ -1,4 +1,4 @@
-package io.darkstar.config;
+package io.darkstar.config.yaml;
 
 public interface AttributeMutable {
 

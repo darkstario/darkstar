@@ -1,0 +1,12 @@
+---
+http:
+
+  connectors:
+
+    http: 8080
+
+    https:
+      port: 8443
+      #tls:
+      #  cert: core/src/test/resources/example.com.crt.pem
+      #  key: core/src/test/resources/example.com.key.pem

@@ -1,5 +1,6 @@
 package io.darkstar.config;
 
+import io.darkstar.config.yaml.AttributeMutable;
 import org.springframework.util.Assert;
 
 import java.util.LinkedHashMap;
