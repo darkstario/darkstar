@@ -3,16 +3,10 @@ package io.darkstar.config.spring;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
-import com.stormpath.sdk.application.Application;
-import com.stormpath.sdk.cache.Caches;
-import com.stormpath.sdk.client.Client;
-import com.stormpath.sdk.client.Clients;
-import io.darkstar.Darkstar;
 import io.darkstar.config.DefaultHostFactory;
 import io.darkstar.config.Host;
 import io.darkstar.config.HostFactory;
 import io.darkstar.config.json.LogConfig;
-import io.darkstar.config.json.StormpathConfig;
 import io.darkstar.config.json.SystemLogConfig;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -26,19 +20,13 @@ import reactor.core.Environment;
 import reactor.core.Reactor;
 import reactor.core.spec.Reactors;
 
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import static io.darkstar.lang.Objects.*;
 
 @SuppressWarnings("unchecked")
 @Configuration
 public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
-
-    public static Map YAML = Darkstar.YAML;
 
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
@@ -249,6 +237,13 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         return new MetricRegistry();
     }
 
+    /*
+    @Bean
+    public StormpathConfig stormpathConfig() {
+        Object stormpath = get(Object.class, YAML, "['http']['vhosts']['vhost.com']['stormpath']");
+        return newInstance(StormpathConfig.class, stormpath);
+    }
+
     @Bean
     public Client stormpathClient() {
         StormpathConfig stormpath = stormpathConfig();
@@ -272,6 +267,7 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         application.getName();
         return application;
     }
+    */
 
     private static String applyUserHome(String path) {
         String toReplace = "${user.home}";
@@ -289,12 +285,6 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         }
 
         return path;
-    }
-
-    @Bean
-    public StormpathConfig stormpathConfig() {
-        Object stormpath = get(Object.class, YAML, "['http']['vhosts']['vhost.com']['stormpath']");
-        return newInstance(StormpathConfig.class, stormpath);
     }
 
     /*

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
-@Component
+@Component("tlsFrontendInitializer")
 public class TlsFrontendInitializer extends FrontendInitializer {
 
     @Autowired

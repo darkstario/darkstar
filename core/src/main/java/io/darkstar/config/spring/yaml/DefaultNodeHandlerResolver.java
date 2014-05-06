@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Default implementation of the {@link NodeHandlerResolver} interface.  Resolves namespace URIs to implementation
  * classes based on the mappings contained in mapping file.
- * <p/>
+ *
  * <p>By default, this implementation looks for the mapping file at {@code META-INF/darkstar.yaml.handlers}, but this
  * can be changed using the {@link #DefaultNodeHandlerResolver(ClassLoader, String)} constructor.
  *
@@ -26,35 +26,24 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DefaultNodeHandlerResolver implements NodeHandlerResolver {
 
-    /**
-     * The location to look for the mapping files. Can be present in multiple JAR files.
-     */
+    /** The location to look for the mapping files. Can be present in multiple JAR files. */
     public static final String DEFAULT_HANDLER_MAPPINGS_LOCATION = "META-INF/darkstar.yaml.handlers";
 
-    /**
-     * Logger available to subclasses
-     */
+    /** Logger available to subclasses */
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-    /**
-     * ClassLoader to use for NodeHandler classes
-     */
+    /** ClassLoader to use for NodeHandler classes */
     private final ClassLoader classLoader;
 
-    /**
-     * Resource location to search for
-     */
+    /** Resource location to search for */
     private final String handlerMappingsLocation;
 
-    /**
-     * Stores the mappings from namespace URI to NodeHandler class name / instance
-     */
+    /** Stores the mappings from namespace URI to NodeHandler class name / instance */
     private volatile Map<String, Object> handlerMappings;
 
-
     /**
-     * Create a new {@code DefaultNodeHandlerResolver} using the default mapping file location.
-     * <p>This constructor will result in the thread context ClassLoader being used to load resources.
+     * Create a new {@code DefaultNodeHandlerResolver} using the default mapping file location. <p>This constructor will
+     * result in the thread context ClassLoader being used to load resources.
      *
      * @see #DEFAULT_HANDLER_MAPPINGS_LOCATION
      */
@@ -65,8 +54,8 @@ public class DefaultNodeHandlerResolver implements NodeHandlerResolver {
     /**
      * Create a new {@code DefaultNodeHandlerResolver} using the default mapping file location.
      *
-     * @param classLoader the {@link ClassLoader} instance used to load mapping resources
-     *                    (may be {@code null}, in which case the thread context ClassLoader will be used)
+     * @param classLoader the {@link ClassLoader} instance used to load mapping resources (may be {@code null}, in which
+     *                    case the thread context ClassLoader will be used)
      * @see #DEFAULT_HANDLER_MAPPINGS_LOCATION
      */
     public DefaultNodeHandlerResolver(ClassLoader classLoader) {
@@ -74,11 +63,10 @@ public class DefaultNodeHandlerResolver implements NodeHandlerResolver {
     }
 
     /**
-     * Create a new {@code DefaultNodeHandlerResolver} using the
-     * supplied mapping file location.
+     * Create a new {@code DefaultNodeHandlerResolver} using the supplied mapping file location.
      *
-     * @param classLoader             the {@link ClassLoader} instance used to load mapping resources
-     *                                may be {@code null}, in which case the thread context ClassLoader will be used)
+     * @param classLoader             the {@link ClassLoader} instance used to load mapping resources may be {@code
+     *                                null}, in which case the thread context ClassLoader will be used)
      * @param handlerMappingsLocation the mapping file location
      */
     public DefaultNodeHandlerResolver(ClassLoader classLoader, String handlerMappingsLocation) {
@@ -87,10 +75,8 @@ public class DefaultNodeHandlerResolver implements NodeHandlerResolver {
         this.handlerMappingsLocation = handlerMappingsLocation;
     }
 
-
     /**
-     * Locate the {@link NodeHandler} for the supplied namespace URI
-     * from the configured mappings.
+     * Locate the {@link NodeHandler} for the supplied namespace URI from the configured mappings.
      *
      * @param nodeName the relevant namespace URI
      * @return the located {@link NodeHandler}, or {@code null} if none found
@@ -126,9 +112,7 @@ public class DefaultNodeHandlerResolver implements NodeHandlerResolver {
         }
     }
 
-    /**
-     * Load the specified NodeHandler mappings lazily.
-     */
+    /** Load the specified NodeHandler mappings lazily. */
     private Map<String, Object> getHandlerMappings() {
         if (this.handlerMappings == null) {
             synchronized (this) {

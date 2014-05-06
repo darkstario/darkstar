@@ -5,7 +5,7 @@ import org.springframework.util.Assert;
 
 import java.util.Map;
 
-public class DefaultListenConfigFactory implements ListenConfigFactory {
+public class DefaultConnectorFactory implements ConnectorFactory {
 
     @Override
     public Connector createListenConfig(String compactDefinition) {

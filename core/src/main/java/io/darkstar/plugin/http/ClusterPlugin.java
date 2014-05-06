@@ -7,13 +7,12 @@ import io.darkstar.config.http.HttpContext;
 import io.darkstar.config.http.VirtualHost;
 import io.darkstar.plugin.AbstractPlugin;
 import io.darkstar.plugin.Directive;
-import io.darkstar.plugin.stereotype.Plugin;
 
 import java.util.Collections;
 import java.util.Map;
 
 @SuppressWarnings("unchecked")
-@Plugin
+//@Plugin
 public class ClusterPlugin extends AbstractPlugin {
 
     @Override

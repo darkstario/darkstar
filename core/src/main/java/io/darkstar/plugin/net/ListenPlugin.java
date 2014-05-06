@@ -1,22 +1,21 @@
 package io.darkstar.plugin.net;
 
 import io.darkstar.config.ContextAttribute;
-import io.darkstar.config.yaml.Node;
 import io.darkstar.config.http.HttpContext;
 import io.darkstar.config.http.VirtualHost;
-import io.darkstar.net.DefaultListenConfigFactory;
+import io.darkstar.config.yaml.Node;
 import io.darkstar.net.Connector;
-import io.darkstar.net.ListenConfigFactory;
+import io.darkstar.net.ConnectorFactory;
+import io.darkstar.net.DefaultConnectorFactory;
 import io.darkstar.net.ServerChannelManager;
 import io.darkstar.plugin.AbstractPlugin;
 import io.darkstar.plugin.Directive;
 import io.darkstar.plugin.Directives;
-import io.darkstar.plugin.stereotype.Plugin;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
 
-@Plugin
+//@Plugin
 public class ListenPlugin extends AbstractPlugin {
 
     private static final Map<String, Directive> DIRECTIVES = Directives.builder()
@@ -25,10 +24,10 @@ public class ListenPlugin extends AbstractPlugin {
     @Autowired
     private ServerChannelManager serverChannelManager;
 
-    private final ListenConfigFactory listenConfigFactory;
+    private final ConnectorFactory connectorFactory;
 
     public ListenPlugin() {
-        this.listenConfigFactory = new DefaultListenConfigFactory();
+        this.connectorFactory = new DefaultConnectorFactory();
     }
 
     @Override
@@ -36,12 +35,14 @@ public class ListenPlugin extends AbstractPlugin {
         return DIRECTIVES;
     }
 
+    /*
     @Override
     public boolean supports(Node node) {
         return  (node.getContext() instanceof HttpContext) && node.hasParent() &&
                 node.getParent().getName().equals("http") || node.getParent().getName().equals("tls");
         //TODO: support listen directives inside of vhost entries?
     }
+    */
 
     @Override
     public Object onConfigNode(Node node) {
@@ -53,9 +54,9 @@ public class ListenPlugin extends AbstractPlugin {
         Object value = node.getValue();
 
         if (value instanceof String) {
-            connector = listenConfigFactory.createListenConfig((String) value);
+            connector = connectorFactory.createListenConfig((String) value);
         } else if (value instanceof Map) {
-            connector = listenConfigFactory.createListenConfig((Map<String, Object>) value);
+            connector = connectorFactory.createListenConfig((Map<String, Object>) value);
         } else {
             throw new IllegalArgumentException("Unsupported listen value: " + value);
         }
@@ -73,9 +74,9 @@ public class ListenPlugin extends AbstractPlugin {
 
         Object value = attribute.getValue();
         if (value instanceof String) {
-            connector = listenConfigFactory.createListenConfig((String) value);
+            connector = connectorFactory.createListenConfig((String) value);
         } else if (value instanceof Map) {
-            connector = listenConfigFactory.createListenConfig((Map<String, Object>) value);
+            connector = connectorFactory.createListenConfig((Map<String, Object>) value);
         } else {
             throw new IllegalArgumentException("Unsupported listen value: " + value);
         }
@@ -89,9 +90,9 @@ public class ListenPlugin extends AbstractPlugin {
 
         Object value = attribute.getValue();
         if (value instanceof String) {
-            connector = listenConfigFactory.createListenConfig((String) value);
+            connector = connectorFactory.createListenConfig((String) value);
         } else if (value instanceof Map) {
-            connector = listenConfigFactory.createListenConfig((Map<String, Object>) value);
+            connector = connectorFactory.createListenConfig((Map<String, Object>) value);
         } else {
             throw new IllegalArgumentException("Unsupported listen value: " + value);
         }

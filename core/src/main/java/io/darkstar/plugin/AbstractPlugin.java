@@ -44,13 +44,15 @@ public abstract class AbstractPlugin implements Plugin {
     @SuppressWarnings("unchecked")
     @Override
     public Object onConfigNode(Node node) {
-        return onConfigAttribute(new DefaultContextAttribute(node.getName(), node.getValue(), node.getContext()));
+        return null;
+        //return onConfigAttribute(new DefaultContextAttribute(node.getName(), node.getValue(), node.getContext()));
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean supports(Node node) {
-        return supports(new DefaultContextAttribute(node.getName(), node.getValue(), node.getContext()));
+        return false;
+        //return supports(new DefaultContextAttribute(node.getName(), node.getValue(), node.getContext()));
     }
 
     protected boolean supports(ContextAttribute attribute) {

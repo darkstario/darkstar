@@ -1,7 +1,6 @@
 package io.darkstar.config.spring.yaml;
 
 import io.darkstar.config.yaml.Node;
-import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 
 public class AbstractSingleBeanDefinitionParser extends AbstractBeanDefinitionParser {
@@ -18,7 +17,7 @@ public class AbstractSingleBeanDefinitionParser extends AbstractBeanDefinitionPa
      * @see #doParse
      */
     @Override
-    protected final AbstractBeanDefinition parseInternal(Node node, ParserContext parserContext) {
+    protected final BeanDefinitionResult parseInternal(Node node, ParserContext parserContext) {
 
         BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition();
 
@@ -45,7 +44,8 @@ public class AbstractSingleBeanDefinitionParser extends AbstractBeanDefinitionPa
             builder.setLazyInit(true);
         }
         doParse(node, parserContext, builder);
-        return builder.getBeanDefinition();
+
+        return new DefaultBeanDefinitionResult(builder.getBeanDefinition());
     }
 
     /**

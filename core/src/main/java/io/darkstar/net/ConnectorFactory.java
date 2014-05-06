@@ -2,7 +2,7 @@ package io.darkstar.net;
 
 import java.util.Map;
 
-public interface ListenConfigFactory {
+public interface ConnectorFactory {
 
     Connector createListenConfig(String compactDefinition);
 

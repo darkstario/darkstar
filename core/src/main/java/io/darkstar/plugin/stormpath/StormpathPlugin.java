@@ -5,11 +5,10 @@ import io.darkstar.config.http.VirtualHost;
 import io.darkstar.plugin.AbstractPlugin;
 import io.darkstar.plugin.Directive;
 import io.darkstar.plugin.Directives;
-import io.darkstar.plugin.stereotype.Plugin;
 
 import java.util.Map;
 
-@Plugin
+//@Plugin
 public class StormpathPlugin extends AbstractPlugin {
 
     public static final Map<String, Directive> DIRECTIVES = Directives.builder()

@@ -4,11 +4,10 @@ import io.darkstar.config.SystemContext;
 import io.darkstar.plugin.AbstractPlugin;
 import io.darkstar.plugin.Directive;
 import io.darkstar.plugin.Directives;
-import io.darkstar.plugin.stereotype.Plugin;
 
 import java.util.Map;
 
-@Plugin
+//@Plugin
 public class SystemLogPlugin extends AbstractPlugin {
 
     public static final Map<String,Directive> DIRECTIVES = Directives.builder()

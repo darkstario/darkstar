@@ -5,6 +5,7 @@ import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.parsing.BeanComponentDefinition;
+import org.springframework.beans.factory.parsing.ComponentDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -26,16 +27,23 @@ public abstract class AbstractBeanDefinitionParser implements BeanDefinitionPars
 
     @Override
     public final BeanDefinition parse(Node node, ParserContext parserContext) {
-        AbstractBeanDefinition definition = parseInternal(node, parserContext);
-        if (definition != null && !parserContext.isNested()) {
+
+        BeanDefinitionResult result = parseInternal(node, parserContext);
+
+        if (result != null && !parserContext.isNested()) {
             try {
-                String id = resolveId(node, definition, parserContext);
+
+                String id = result.getBeanName();
+
                 if (!StringUtils.hasText(id)) {
-                    parserContext.getReaderContext().error(
-                            "Name is required for config node '" + node + "' when used as a top-level node", node);
+                    id = resolveId(node, (AbstractBeanDefinition)result.getBeanDefinition(), parserContext);
+                    if (!StringUtils.hasText(id)) {
+                        parserContext.getReaderContext().error(
+                                "Name is required for config node '" + node + "' when used as a top-level node", node);
+                    }
                 }
 
-                //TODO: support naming aliases?
+                //TODO: support auto-naming aliases?
                 /*
                 String[] aliases = new String[0];
                 String name = node.getName();
@@ -43,7 +51,7 @@ public abstract class AbstractBeanDefinitionParser implements BeanDefinitionPars
                     aliases = StringUtils.trimArrayElements(StringUtils.commaDelimitedListToStringArray(name));
                 }
                 */
-                BeanDefinitionHolder holder = new BeanDefinitionHolder(definition, id, null);
+                BeanDefinitionHolder holder = new BeanDefinitionHolder(result.getBeanDefinition(), id, result.getBeanAliases());
                 registerBeanDefinition(holder, parserContext.getRegistry());
                 if (shouldFireEvents()) {
                     BeanComponentDefinition componentDefinition = new BeanComponentDefinition(holder);
@@ -55,7 +63,12 @@ public abstract class AbstractBeanDefinitionParser implements BeanDefinitionPars
                 return null;
             }
         }
-        return definition;
+
+        if (result != null) {
+            return result.getBeanDefinition();
+        }
+
+        return null;
     }
 
     /**
@@ -105,6 +118,11 @@ public abstract class AbstractBeanDefinitionParser implements BeanDefinitionPars
         BeanDefinitionReaderUtils.registerBeanDefinition(definition, registry);
     }
 
+    protected void parseChild(Node childNode, ParserContext parserContext) {
+        BeanDefinitionParser parser = parserContext.getReaderContext()
+                .getBeanDefinitionParserResolver().resolveParser(childNode);
+        parser.parse(childNode, parserContext);
+    }
 
     /**
      * Central template method to actually parse the supplied {@link Node}
@@ -117,7 +135,7 @@ public abstract class AbstractBeanDefinitionParser implements BeanDefinitionPars
      * @see #parse(Node, ParserContext)
      * @see #postProcessComponentDefinition(org.springframework.beans.factory.parsing.BeanComponentDefinition)
      */
-    protected abstract AbstractBeanDefinition parseInternal(Node node, ParserContext parserContext);
+    protected abstract BeanDefinitionResult parseInternal(Node node, ParserContext parserContext);
 
     /**
      * Should an ID be generated instead of read from the passed in {@link Node}?

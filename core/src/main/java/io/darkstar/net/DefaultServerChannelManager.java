@@ -100,7 +100,7 @@ public class DefaultServerChannelManager implements ServerChannelManager {
     @Override
     public void sync() {
         try {
-            lastChannel.closeFuture().syncUninterruptibly();
+            lastChannel.closeFuture().awaitUninterruptibly();
             allChannels.close().awaitUninterruptibly();
         } finally {
             bossGroup.shutdownGracefully().syncUninterruptibly();

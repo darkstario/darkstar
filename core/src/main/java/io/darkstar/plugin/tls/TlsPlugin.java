@@ -6,7 +6,6 @@ import io.darkstar.config.json.TlsConfig;
 import io.darkstar.plugin.AbstractPlugin;
 import io.darkstar.plugin.Directive;
 import io.darkstar.plugin.Directives;
-import io.darkstar.plugin.stereotype.Plugin;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.util.CollectionUtils;
 
@@ -14,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("unchecked")
-@Plugin
+//@Plugin
 public class TlsPlugin extends AbstractPlugin {
 
     public static final Map<String, Directive> DIRECTIVES = Directives.builder().add("tls", VirtualHost.class).buildMap();

@@ -6,11 +6,10 @@ import io.darkstar.config.http.DefaultHttpContext;
 import io.darkstar.plugin.AbstractPlugin;
 import io.darkstar.plugin.Directive;
 import io.darkstar.plugin.Directives;
-import io.darkstar.plugin.stereotype.Plugin;
 
 import java.util.Map;
 
-@Plugin
+//@Plugin
 @SuppressWarnings("unchecked")
 public class HttpPlugin extends AbstractPlugin {
 

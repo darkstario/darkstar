@@ -1,35 +1,56 @@
 package io.darkstar;
 
-import io.darkstar.net.ServerChannelManager;
+import io.darkstar.config.spring.yaml.YamlBeanDefinitionReader;
+import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
+import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.io.FileSystemResource;
+
+import java.util.Map;
 
 @SuppressWarnings("unchecked")
 public class Darkstar {
 
     private static final Logger log = LoggerFactory.getLogger(Darkstar.class);
 
-    private final AnnotationConfigApplicationContext appCtx;
+    private final GenericApplicationContext appCtx;
+    private final String configFileLocation;
     private final long startMillis;
 
     public static String YAML_FILE_PATH; //todo remove
 
-    private Darkstar(long startMillis) {
+    private Darkstar(long startMillis, String configFileLocation) {
+
         this.startMillis = startMillis;
-        appCtx = new AnnotationConfigApplicationContext();
+        this.configFileLocation = configFileLocation;
+
+        GenericApplicationContext appCtx = new GenericApplicationContext();
         appCtx.registerShutdownHook();
-        appCtx.scan("io.darkstar");
+
+        //scan for classes:
+        ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(appCtx);
+        scanner.scan("io.darkstar");
+
+        //handle YAML config:
+        YamlBeanDefinitionReader yamlReader = new YamlBeanDefinitionReader(appCtx);
+        yamlReader.loadBeanDefinitions(new FileSystemResource(configFileLocation));
+
+        //start:
         appCtx.refresh();
+
+        this.appCtx = appCtx;
     }
 
     public void run() throws Exception {
         try {
-            ServerChannelManager serverChannelManager = appCtx.getBean(ServerChannelManager.class);
-            serverChannelManager.init();
+            Map<String,Channel> beans = appCtx.getBeansOfType(Channel.class);
             long duration = System.currentTimeMillis() - this.startMillis;
             log.info("Darkstar started in {} ms.", duration);
-            serverChannelManager.sync();
+            for(Channel channel : beans.values()) {
+                channel.closeFuture().awaitUninterruptibly();
+            }
         } finally {
             appCtx.close();
         }
@@ -54,7 +75,7 @@ public class Darkstar {
         YAML_FILE_PATH = applyUserHome(yamlFilePath);
 
         try {
-            new Darkstar(startupMillis).run();
+            new Darkstar(startupMillis, YAML_FILE_PATH).run();
         } catch (Exception e) {
             e.printStackTrace(System.err);
             System.exit(-1);

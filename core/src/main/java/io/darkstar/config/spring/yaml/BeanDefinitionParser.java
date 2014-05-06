@@ -2,6 +2,7 @@ package io.darkstar.config.spring.yaml;
 
 import io.darkstar.config.yaml.Node;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.parsing.ComponentDefinition;
 
 /**
  * Interface used by the {@link DefaultBeanDefinitionDocumentReader} to handle custom (plugin-specific) YAML
