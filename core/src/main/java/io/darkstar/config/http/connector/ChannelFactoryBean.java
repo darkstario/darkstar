@@ -1,6 +1,5 @@
 package io.darkstar.config.http.connector;
 
-import io.darkstar.net.Connector;
 import io.darkstar.net.DefaultHost;
 import io.darkstar.net.Host;
 import io.darkstar.net.HostParser;
@@ -51,7 +50,7 @@ public class ChannelFactoryBean extends AbstractFactoryBean<Channel> implements 
 
     @Override
     public Class<?> getObjectType() {
-        return Connector.class;
+        return Channel.class;
     }
 
     @Override

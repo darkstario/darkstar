@@ -34,6 +34,10 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
         this.environment = environment;
     }
 
+    public Environment getEnvironment() {
+        return environment;
+    }
+
     /**
      * {@inheritDoc}
      */

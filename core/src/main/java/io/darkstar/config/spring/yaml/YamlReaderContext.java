@@ -6,6 +6,7 @@ import org.springframework.beans.factory.parsing.ReaderContext;
 import org.springframework.beans.factory.parsing.ReaderEventListener;
 import org.springframework.beans.factory.parsing.SourceExtractor;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
@@ -15,16 +16,24 @@ public class YamlReaderContext extends ReaderContext {
 
     private final BeanDefinitionParserResolver beanDefinitionParserResolver;
 
+    private final Environment environment;
+
     public YamlReaderContext(Resource resource, ProblemReporter problemReporter,
                              ReaderEventListener eventListener, SourceExtractor sourceExtractor,
-                             YamlBeanDefinitionReader reader, BeanDefinitionParserResolver beanDefinitionParserResolver) {
+                             YamlBeanDefinitionReader reader, Environment environment,
+                             BeanDefinitionParserResolver beanDefinitionParserResolver) {
         super(resource, problemReporter, eventListener, sourceExtractor);
         this.reader = reader;
+        this.environment = environment;
         this.beanDefinitionParserResolver = beanDefinitionParserResolver;
     }
 
     public final YamlBeanDefinitionReader getReader() {
         return this.reader;
+    }
+
+    public Environment getEnvironment() {
+        return environment;
     }
 
     public final BeanDefinitionRegistry getRegistry() {

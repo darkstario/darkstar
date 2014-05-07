@@ -1,5 +1,6 @@
 package io.darkstar.http;
 
+import io.darkstar.net.DefaultHost;
 import io.darkstar.net.Host;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
@@ -82,17 +83,7 @@ public class DefaultRequest extends DefaultHttpRequest implements Request<Reques
     @Override
     public Host getClientHost() {
         //don't allow callers to manipulate this value:
-        return new Host() {
-            @Override
-            public String getName() {
-                return clientHost.getName();
-            }
-
-            @Override
-            public int getPort() {
-                return clientHost.getPort();
-            }
-        };
+        return new DefaultHost(clientHost.getName(), clientHost.getPort());
     }
 
     public void setClientHost(Host host) {
@@ -103,17 +94,7 @@ public class DefaultRequest extends DefaultHttpRequest implements Request<Reques
     @Override
     public Host getRequestedServerHost() {
         //don't allow callers to manipulate this value:
-        return new Host() {
-            @Override
-            public String getName() {
-                return requestedServerHost.getName();
-            }
-
-            @Override
-            public int getPort() {
-                return requestedServerHost.getPort();
-            }
-        };
+        return new DefaultHost(requestedServerHost.getName(), requestedServerHost.getPort());
     }
 
     public void setRequestedServerHost(Host host) {

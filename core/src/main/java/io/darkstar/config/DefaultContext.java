@@ -1,13 +1,12 @@
 package io.darkstar.config;
 
-import io.darkstar.config.yaml.AttributeMutable;
 import org.springframework.util.Assert;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @SuppressWarnings("unchecked")
-public class DefaultContext<C extends Context> implements Context<C>, AttributeMutable {
+public class DefaultContext<C extends Context> implements Context<C> {
 
     private final String name;
     private final C parent;
@@ -35,7 +34,6 @@ public class DefaultContext<C extends Context> implements Context<C>, AttributeM
         return (T) this.attributes.get(name);
     }
 
-    @Override
     public <T> T setAttribute(String name, T value) {
         return (T) this.attributes.put(name, value);
     }

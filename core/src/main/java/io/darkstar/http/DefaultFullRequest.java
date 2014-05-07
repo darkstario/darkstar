@@ -1,5 +1,6 @@
 package io.darkstar.http;
 
+import io.darkstar.net.DefaultHost;
 import io.darkstar.net.Host;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -88,18 +89,8 @@ public class DefaultFullRequest extends DefaultFullHttpRequest implements FullRe
 
     @Override
     public Host getClientHost() {
-        //don't allow callers to manipulate this value:
-        return new Host() {
-            @Override
-            public String getName() {
-                return clientHost.getName();
-            }
-
-            @Override
-            public int getPort() {
-                return clientHost.getPort();
-            }
-        };
+        //don't allow callers to manipulate the local value:
+        return new DefaultHost(clientHost.getName(), clientHost.getPort());
     }
 
     public void setClientHost(Host host) {
@@ -110,17 +101,7 @@ public class DefaultFullRequest extends DefaultFullHttpRequest implements FullRe
     @Override
     public Host getRequestedServerHost() {
         //don't allow callers to manipulate this value:
-        return new Host() {
-            @Override
-            public String getName() {
-                return requestedServerHost.getName();
-            }
-
-            @Override
-            public int getPort() {
-                return requestedServerHost.getPort();
-            }
-        };
+        return new DefaultHost(requestedServerHost.getName(), requestedServerHost.getPort());
     }
 
     public void setRequestedServerHost(Host host) {

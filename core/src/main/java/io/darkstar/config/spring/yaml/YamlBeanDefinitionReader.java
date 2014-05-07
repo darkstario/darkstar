@@ -189,7 +189,7 @@ public class YamlBeanDefinitionReader extends AbstractBeanDefinitionReader {
      */
     public YamlReaderContext createReaderContext(Resource resource) {
         return new YamlReaderContext(resource, this.problemReporter, this.eventListener,
-                this.sourceExtractor, this, getBeanDefinitionParserResolver());
+                this.sourceExtractor, this, getEnvironment(), getBeanDefinitionParserResolver());
     }
 
     public BeanDefinitionParserResolver getBeanDefinitionParserResolver() {
