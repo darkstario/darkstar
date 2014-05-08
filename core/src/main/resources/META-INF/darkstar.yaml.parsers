@@ -1,2 +1,3 @@
 http = io.darkstar.config.spring.yaml.ContainerBeanDefinitionParser
 connectors = io.darkstar.config.http.connector.ConnectorsBeanDefinitionParser
+vhosts = io.darkstar.config.http.vhost.VhostsBeanDefinitionParser

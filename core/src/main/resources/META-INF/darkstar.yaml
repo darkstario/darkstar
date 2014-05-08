@@ -3,10 +3,15 @@ http:
 
   connectors:
 
-    http: 8080
+    http: 8000
 
     https:
       port: 8443
       #tls:
       #  cert: core/src/test/resources/example.com.crt.pem
       #  key: core/src/test/resources/example.com.key.pem
+
+  vhosts:
+
+    vhost.com: localhost:8080
+

@@ -2,7 +2,8 @@ package io.darkstar;
 
 import com.google.common.base.Charsets;
 import com.google.common.eventbus.EventBus;
-import io.darkstar.config.json.VirtualHostConfig;
+import io.darkstar.http.VirtualHost;
+import io.darkstar.http.VirtualHostResolver;
 import io.darkstar.net.DefaultHost;
 import io.darkstar.net.Host;
 import io.darkstar.net.HostParser;
@@ -29,12 +30,10 @@ import org.apache.shiro.util.AntPathMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
@@ -55,9 +54,8 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
     @Autowired
     private EventBus eventBus;
 
-    @Resource
-    @Qualifier("virtualHosts")
-    private Map<String, VirtualHostConfig> virtualHosts;
+    @Autowired
+    private VirtualHostResolver vhostResolver;
 
     private Channel backendChannel;
 
@@ -153,7 +151,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                 return;
             }
 
-            VirtualHostConfig vhost = virtualHosts.get(requestedHost.getName());
+            VirtualHost vhost = vhostResolver.getVirtualHost(requestedHost.getName());
             if (vhost == null) {
                 //there is no vhost configured that matches the client's requested host - reject the request:
                 sendError(ctx, HttpResponseStatus.SERVICE_UNAVAILABLE, null);
@@ -161,7 +159,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             }
 
             //TODO determine destinationHost based on a load balancing algorithm
-            destinationHost = HostParser.INSTANCE.parse(vhost.getBalance().getMembers().iterator().next());
+            destinationHost = HostParser.INSTANCE.parse(vhost.getName());
 
             connectToDestination(ctx, destinationHost);
         }

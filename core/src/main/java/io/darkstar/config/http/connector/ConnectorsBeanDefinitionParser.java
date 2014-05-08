@@ -8,7 +8,7 @@ import io.darkstar.config.spring.yaml.ParserContext;
 import io.darkstar.config.yaml.MappingNode;
 import io.darkstar.config.yaml.Node;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
-import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -25,10 +25,13 @@ public class ConnectorsBeanDefinitionParser extends AbstractBeanDefinitionParser
     @Override
     protected BeanDefinitionResult parseInternal(Node node, ParserContext parserContext) {
 
-        Assert.isInstanceOf(MappingNode.class, node, "'" + node.getName() +
-                "' configuration must be a YAML Mapping node.");
+        MappingNode connectors = (node instanceof MappingNode) ? (MappingNode)node : null;
 
-        MappingNode connectors = (MappingNode) node;
+        if (connectors == null || CollectionUtils.isEmpty(connectors.getValue())) {
+            String msg = "'" + node.getName() + "' configuration must specify one or more connector entries.";
+            parserContext.getReaderContext().error(msg, connectors);
+            return null;
+        }
 
         //create a copy so we don't alter the source map:
         Map<String,Node> children = new LinkedHashMap<>(connectors.getValue());
