@@ -10,6 +10,8 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
@@ -19,6 +21,8 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 public class ChannelFactoryBean extends AbstractFactoryBean<Channel> implements ApplicationContextAware {
+
+    private static final Logger log = LoggerFactory.getLogger(ChannelFactoryBean.class);
 
     private String address;
     private int port;
@@ -107,7 +111,9 @@ public class ChannelFactoryBean extends AbstractFactoryBean<Channel> implements 
             future = bootstrap.bind(host.getPort());
         }
 
-        future.awaitUninterruptibly();
+        future.sync();
+
+        log.info("Listening on {}...", host);
 
         return future.channel();
     }
@@ -115,6 +121,6 @@ public class ChannelFactoryBean extends AbstractFactoryBean<Channel> implements 
 
     @Override
     protected void destroyInstance(Channel channel) throws Exception {
-        channel.closeFuture().awaitUninterruptibly();
+        channel.close().sync();
     }
 }

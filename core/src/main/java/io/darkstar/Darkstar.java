@@ -1,14 +1,11 @@
 package io.darkstar;
 
 import io.darkstar.config.spring.yaml.YamlBeanDefinitionReader;
-import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.FileSystemResource;
-
-import java.util.Map;
 
 @SuppressWarnings("unchecked")
 public class Darkstar {
@@ -19,15 +16,23 @@ public class Darkstar {
     private final String configFileLocation;
     private final long startMillis;
 
-    public static String YAML_FILE_PATH; //todo remove
-
     private Darkstar(long startMillis, String configFileLocation) {
-
         this.startMillis = startMillis;
         this.configFileLocation = configFileLocation;
+        this.appCtx = new GenericApplicationContext();
+    }
 
-        GenericApplicationContext appCtx = new GenericApplicationContext();
-        appCtx.registerShutdownHook();
+    public void run() throws Exception {
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                long start = System.currentTimeMillis();
+                log.info("Darkstar shutting down...");
+                appCtx.close();
+                log.info("Darkstar shut down in {} ms", (System.currentTimeMillis() - start));
+            }
+        });
 
         //scan for classes:
         ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(appCtx);
@@ -40,23 +45,13 @@ public class Darkstar {
         //start:
         appCtx.refresh();
 
-        this.appCtx = appCtx;
-    }
-
-    public void run() throws Exception {
-        try {
-            Map<String,Channel> beans = appCtx.getBeansOfType(Channel.class);
-            long duration = System.currentTimeMillis() - this.startMillis;
-            log.info("Darkstar started in {} ms.", duration);
-            for(Channel channel : beans.values()) {
-                channel.closeFuture().awaitUninterruptibly();
-            }
-        } finally {
-            appCtx.close();
-        }
+        long duration = System.currentTimeMillis() - this.startMillis;
+        log.info("Darkstar started in {} ms", duration);
     }
 
     public static void main(String[] args) throws Exception {
+
+        log.info("Darkstar starting...");
 
         long startupMillis = System.currentTimeMillis();
 
@@ -72,10 +67,10 @@ public class Darkstar {
             return;
         }
 
-        YAML_FILE_PATH = applyUserHome(yamlFilePath);
+        final String configFileLocation = applyUserHome(yamlFilePath);
 
         try {
-            new Darkstar(startupMillis, YAML_FILE_PATH).run();
+            new Darkstar(startupMillis, configFileLocation).run();
         } catch (Exception e) {
             e.printStackTrace(System.err);
             System.exit(-1);

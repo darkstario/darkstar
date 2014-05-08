@@ -3,6 +3,8 @@ package io.darkstar.config.spring.yaml;
 import io.darkstar.config.yaml.DefaultNodeFactory;
 import io.darkstar.config.yaml.Node;
 import io.darkstar.config.yaml.NodeFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.parsing.EmptyReaderEventListener;
@@ -25,6 +27,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class YamlBeanDefinitionReader extends AbstractBeanDefinitionReader {
+
+    private static final Logger log = LoggerFactory.getLogger(YamlBeanDefinitionReader.class);
 
     private Class<? extends BeanDefinitionDocumentReader> contentReaderClass = DefaultBeanDefinitionDocumentReader.class;
 
@@ -85,9 +89,8 @@ public class YamlBeanDefinitionReader extends AbstractBeanDefinitionReader {
      */
     public int loadBeanDefinitions(EncodedResource encodedResource) throws BeanDefinitionStoreException {
         Assert.notNull(encodedResource, "EncodedResource must not be null");
-        if (logger.isInfoEnabled()) {
-            logger.info("Loading YAML bean definitions from " + encodedResource.getResource());
-        }
+
+        log.debug("Loading YAML bean definitions from {}", encodedResource);
 
         Set<EncodedResource> currentResources = this.resourcesCurrentlyBeingLoaded.get();
         if (currentResources == null) {

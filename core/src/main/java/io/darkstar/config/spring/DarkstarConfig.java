@@ -3,9 +3,6 @@ package io.darkstar.config.spring;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
-import io.darkstar.config.DefaultHostFactory;
-import io.darkstar.config.Host;
-import io.darkstar.config.HostFactory;
 import io.darkstar.config.json.LogConfig;
 import io.darkstar.config.json.SystemLogConfig;
 import org.springframework.beans.BeansException;
@@ -170,14 +167,6 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
         return new AccessLogBeanDefinitionFactory();
     }
 
-    @Bean
-    public Host defaultHost() {
-        return new Host("127.0.0.1", 5000);
-        //String name = get(String.class, YAML, "['http']['name']");
-        //int port = get(Integer.class, YAML, "['http']['port']");
-        //return new Host(name, port);
-    }
-
     @Bean(destroyMethod = "shutdown")
     public Environment reactorEnvironment() {
         return new Environment();
@@ -215,11 +204,6 @@ public class DarkstarConfig implements BeanDefinitionRegistryPostProcessor {
     public ScheduledExecutorService eventListenerExecutor() {
         int numProcs = Runtime.getRuntime().availableProcessors();
         return Executors.newScheduledThreadPool(numProcs);
-    }
-
-    @Bean
-    public HostFactory hostFactory() {
-        return new DefaultHostFactory();
     }
 
     @Bean

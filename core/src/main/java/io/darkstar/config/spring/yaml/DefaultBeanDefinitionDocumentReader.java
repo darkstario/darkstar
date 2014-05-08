@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocumentReader {
 
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     private Environment environment;
 
@@ -44,7 +44,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
     @Override
     public void registerBeanDefinitions(Node node, YamlReaderContext readerContext) throws BeanDefinitionStoreException {
         this.readerContext = readerContext;
-        logger.debug("Loading bean definitions");
+        log.debug("Loading bean definitions");
         doRegisterBeanDefinitions(node);
     }
 

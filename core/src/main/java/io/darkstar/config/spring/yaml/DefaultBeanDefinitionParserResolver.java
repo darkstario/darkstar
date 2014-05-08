@@ -25,7 +25,7 @@ public class DefaultBeanDefinitionParserResolver implements BeanDefinitionParser
     /**
      * Logger available to subclasses
      */
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     /**
      * ClassLoader to use for BeanDefinitionParser classes
@@ -130,7 +130,7 @@ public class DefaultBeanDefinitionParserResolver implements BeanDefinitionParser
                         Properties mappings =
                                 PropertiesLoaderUtils.loadAllProperties(this.parserMappingsLocation, this.classLoader);
 
-                        logger.debug("Loaded BeanDefinitionParser mappings: {}", mappings);
+                        log.debug("Loaded BeanDefinitionParser mappings: {}", mappings);
 
                         Map<String, Object> handlerMappings = new ConcurrentHashMap<>(mappings.size());
                         CollectionUtils.mergePropertiesIntoMap(mappings, handlerMappings);

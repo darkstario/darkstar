@@ -2,8 +2,10 @@ package io.darkstar;
 
 import com.google.common.base.Charsets;
 import com.google.common.eventbus.EventBus;
-import io.darkstar.config.Host;
 import io.darkstar.config.json.VirtualHostConfig;
+import io.darkstar.net.DefaultHost;
+import io.darkstar.net.Host;
+import io.darkstar.net.HostParser;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -159,7 +161,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             }
 
             //TODO determine destinationHost based on a load balancing algorithm
-            destinationHost = parseHost(vhost.getBalance().getMembers().iterator().next());
+            destinationHost = HostParser.INSTANCE.parse(vhost.getBalance().getMembers().iterator().next());
 
             connectToDestination(ctx, destinationHost);
         }
@@ -368,26 +370,10 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             if (port <= 0) {
                 port = 80;
             }
-            return new Host(requestUri.getHost(), port);
+            return new DefaultHost(requestUri.getHost(), port);
         }
 
-        return parseHost(hostHeaderValue);
-    }
-
-    private static Host parseHost(String hostString) {
-        if (hostString == null) {
-            return null;
-        }
-
-        String hostName = hostString;
-        int port = 80;
-        int i = hostString.lastIndexOf(':');
-        if (i >= 0) {
-            hostName = hostString.substring(0, i);
-            String portString = hostString.substring(i + 1);
-            port = Integer.parseInt(portString);
-        }
-        return new Host(hostName, port);
+        return HostParser.INSTANCE.parse(hostHeaderValue);
     }
 
     private static Host getHost(SocketAddress addr) {
@@ -396,10 +382,10 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             InetSocketAddress inetAddr = (InetSocketAddress) addr;
             String host = inetAddr.getHostString();
             int port = inetAddr.getPort();
-            return new Host(host, port);
+            return new DefaultHost(host, port);
         }
 
-        return parseHost(addr.toString());
+        return HostParser.INSTANCE.parse(addr.toString());
     }
 
     private static byte[] utf8(Object o) {
