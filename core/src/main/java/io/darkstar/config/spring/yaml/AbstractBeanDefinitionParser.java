@@ -118,6 +118,12 @@ public abstract class AbstractBeanDefinitionParser implements BeanDefinitionPars
         BeanDefinitionReaderUtils.registerBeanDefinition(definition, registry);
     }
 
+    protected void registerBeanDefinition(BeanDefinitionRegistry registry,
+                                          BeanDefinition definition,
+                                          String beanName, String... aliases) {
+        registerBeanDefinition(new BeanDefinitionHolder(definition, beanName, aliases), registry);
+    }
+
     protected void parseChild(Node childNode, ParserContext parserContext) {
         BeanDefinitionParser parser = parserContext.getReaderContext()
                 .getBeanDefinitionParserResolver().resolveParser(childNode);

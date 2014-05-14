@@ -2,6 +2,7 @@ package io.darkstar;
 
 import com.google.common.base.Charsets;
 import com.google.common.eventbus.EventBus;
+import io.darkstar.http.UnknownVirtualHostException;
 import io.darkstar.http.VirtualHost;
 import io.darkstar.http.VirtualHostResolver;
 import io.darkstar.net.DefaultHost;
@@ -151,8 +152,10 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                 return;
             }
 
-            VirtualHost vhost = vhostResolver.getVirtualHost(requestedHost.getName());
-            if (vhost == null) {
+            VirtualHost vhost;
+            try {
+                vhost = vhostResolver.getVirtualHost(requestedHost.getName());
+            } catch (UnknownVirtualHostException e) {
                 //there is no vhost configured that matches the client's requested host - reject the request:
                 sendError(ctx, HttpResponseStatus.SERVICE_UNAVAILABLE, null);
                 return;

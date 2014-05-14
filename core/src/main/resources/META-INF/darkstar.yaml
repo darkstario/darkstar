@@ -13,5 +13,11 @@ http:
 
   vhosts:
 
-    vhost.com: localhost:8080
+    vhost.com:
+
+      routes:
+
+        /oauth:
+
+          tunnel_to: api.stormpath.com/oauth
 
