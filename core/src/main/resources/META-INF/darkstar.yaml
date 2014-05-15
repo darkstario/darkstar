@@ -13,11 +13,13 @@ http:
 
   vhosts:
 
-    vhost.com:
+    '*.foo.com':
 
-      routes:
+      origin: whatever.com
 
-        /oauth:
+      #tls:
+      #  cert: core/src/test/resources/example.com.crt.pem
+      #  key: core/src/test/resources/example.com.key.pem
 
-          tunnel_to: whatever.com
-
+      #routes:
+      #  /: localhost:8080
