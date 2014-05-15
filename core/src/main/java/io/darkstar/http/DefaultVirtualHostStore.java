@@ -21,14 +21,8 @@ public class DefaultVirtualHostStore implements ConcurrentVirtualHostStore {
     }
 
     @Override
-    public VirtualHost getVirtualHost(String hostName) {
-        VirtualHost vhost = this.vhosts.get(hostName);
-        if (vhost == null) {
-            String msg = "Unable to locate a virtual host for host name '" + hostName + "'.";
-            throw new UnknownVirtualHostException(msg);
-        }
-
-        return vhost;
+    public VirtualHost findVirtualHost(String hostName) {
+        return this.vhosts.get(hostName);
     }
 
     @Override

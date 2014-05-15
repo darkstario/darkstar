@@ -6,4 +6,6 @@ public interface HostParser {
 
     Host parse(String value);
 
+    Host parse(String value, int defaultPort);
+
 }

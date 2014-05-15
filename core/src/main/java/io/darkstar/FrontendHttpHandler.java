@@ -162,7 +162,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             }
 
             //TODO determine destinationHost based on a load balancing algorithm
-            destinationHost = HostParser.INSTANCE.parse(vhost.getName());
+            destinationHost = vhost.getOriginHost();
 
             connectToDestination(ctx, destinationHost);
         }

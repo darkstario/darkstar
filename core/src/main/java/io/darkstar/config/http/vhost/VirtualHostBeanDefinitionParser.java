@@ -6,9 +6,16 @@ import io.darkstar.config.spring.yaml.ParserContext;
 import io.darkstar.config.yaml.MappingNode;
 import io.darkstar.config.yaml.Node;
 import io.darkstar.http.DefaultVirtualHost;
+import io.darkstar.net.Host;
+import io.darkstar.net.HostParser;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.ManagedSet;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class VirtualHostBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
@@ -18,6 +25,7 @@ public class VirtualHostBeanDefinitionParser extends AbstractBeanDefinitionParse
         this.vhostStoreBeanId = vhostStoreBeanId;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected BeanDefinitionResult parseInternal(Node node, ParserContext parserContext) {
 
@@ -31,10 +39,13 @@ public class VirtualHostBeanDefinitionParser extends AbstractBeanDefinitionParse
 
         String vhostName = vhostNode.getName();
 
-        DefaultVirtualHost vhost = new DefaultVirtualHost(vhostName, null);
+        Set<String> vhostNames = StringUtils.commaDelimitedListToSet(vhostName);
+        vhostName = vhostNames.iterator().next(); //first is always the primary
+        vhostNames.remove(vhostName); //what remains are aliases
+        Set<String> aliases = new LinkedHashSet<>(vhostNames);
 
-        //todo:
-        /*
+        Host originHost = null;
+
         Map<String,Node> values = vhostNode.getValue();
 
         for(Map.Entry<String,Node> entry : values.entrySet()) {
@@ -43,16 +54,23 @@ public class VirtualHostBeanDefinitionParser extends AbstractBeanDefinitionParse
             Node value = entry.getValue();
 
             switch(name) {
-
-                case "aliases":
-                    //todo
+                case "origin":
+                    String originValue = String.valueOf(value.getValue());
+                    try {
+                        originHost = HostParser.INSTANCE.parse(originValue, 80);
+                    } catch (Exception e) {
+                        String msg = "Unable to read origin Host value '" + originValue + "'";
+                        parserContext.getReaderContext().error(msg, value, e);
+                        return null;
+                    }
 
                     break;
-
-                //todo: default
+                default:
+                    parseChild(value, parserContext);
             }
         }
-        */
+
+        DefaultVirtualHost vhost = new DefaultVirtualHost(vhostName, aliases, originHost);
 
         BeanDefinition vhostStoreDef = parserContext.getRegistry().getBeanDefinition(this.vhostStoreBeanId);
         ManagedSet set = (ManagedSet)vhostStoreDef.getPropertyValues().get("virtualHosts");

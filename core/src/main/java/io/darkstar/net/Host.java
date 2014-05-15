@@ -4,5 +4,7 @@ public interface Host {
 
     String getName();
 
+    boolean hasPort();
+
     int getPort();
 }

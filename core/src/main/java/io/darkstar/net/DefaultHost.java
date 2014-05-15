@@ -16,7 +16,15 @@ public class DefaultHost implements Host {
     }
 
     @Override
+    public boolean hasPort() {
+        return this.port > 0;
+    }
+
+    @Override
     public int getPort() {
+        if (!hasPort()) {
+            throw new IllegalStateException("No port value specified.");
+        }
         return this.port;
     }
 
@@ -41,7 +49,12 @@ public class DefaultHost implements Host {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(name != null ? name : '*').append(':').append(port);
+        sb.append(name != null ? name : '*');
+
+        if (hasPort()) {
+            sb.append(':').append(port);
+        }
+
         return sb.toString();
     }
 }

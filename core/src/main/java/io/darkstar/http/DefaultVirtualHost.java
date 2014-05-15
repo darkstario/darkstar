@@ -1,5 +1,6 @@
 package io.darkstar.http;
 
+import io.darkstar.net.Host;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Collections;
@@ -9,10 +10,12 @@ public class DefaultVirtualHost implements VirtualHost {
 
     private final String name;
     private final Set<String> aliases;
+    private final Host originHost;
 
-    public DefaultVirtualHost(String name, Set<String> aliases) {
+    public DefaultVirtualHost(String name, Set<String> aliases, Host originHost) {
         this.name = name;
         this.aliases = CollectionUtils.isEmpty(aliases) ? Collections.emptySet() : Collections.unmodifiableSet(aliases);
+        this.originHost = originHost;
     }
 
     @Override
@@ -23,5 +26,10 @@ public class DefaultVirtualHost implements VirtualHost {
     @Override
     public Set<String> getAliases() {
         return this.aliases;
+    }
+
+    @Override
+    public Host getOriginHost() {
+        return this.originHost;
     }
 }
