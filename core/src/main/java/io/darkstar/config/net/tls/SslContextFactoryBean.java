@@ -6,6 +6,7 @@ import org.springframework.util.StringUtils;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
+import java.util.Arrays;
 import java.util.List;
 
 public class SslContextFactoryBean extends AbstractFactoryBean<SSLContext> {
@@ -14,6 +15,12 @@ public class SslContextFactoryBean extends AbstractFactoryBean<SSLContext> {
 
     protected String protocol = "TLS";
     protected String providerName;
+
+    public void setKeyManager(KeyManager keyManager) {
+        Assert.notNull(keyManager, "keyManager cannot be null.");
+        List<KeyManager> keyManagers = Arrays.asList(keyManager);
+        setKeyManagers(keyManagers);
+    }
 
     public void setKeyManagers(List<KeyManager> keyManagers) {
         Assert.notNull(keyManagers, "KeyManager list cannot be null.");

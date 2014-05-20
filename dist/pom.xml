@@ -12,7 +12,7 @@
 
     <artifactId>darkstar</artifactId>
     <name>Darkstar :: Dist</name>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
     <dependencies>
         <dependency>
@@ -22,36 +22,51 @@
     </dependencies>
 
     <build>
+        <finalName>darkstar-${project.version}</finalName>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>appassembler-maven-plugin</artifactId>
+                <version>1.8</version>
+                <configuration>
+                    <programs>
+                        <program>
+                            <mainClass>io.darkstar.Darkstar</mainClass>
+                            <id>darkstar</id>
+                        </program>
+                    </programs>
+                    <repositoryName>lib</repositoryName>
+                    <repositoryLayout>flat</repositoryLayout>
+                    <licenseHeaderFile>src/main/resources/LICENSE.txt</licenseHeaderFile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>assemble</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.4</version>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>io.darkstar.Darkstar</mainClass>
-                        </manifest>
-                    </archive>
-                    <appendAssemblyId>false</appendAssemblyId>
-                </configuration>
                 <executions>
                     <execution>
                         <id>make-assembly</id>
-                        <!-- this is used for inheritance merges -->
                         <phase>package</phase>
-                        <!-- bind to the packaging phase -->
                         <goals>
                             <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <finalName>darkstar-${project.version}</finalName>
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <descriptors>
+                        <descriptor>src/main/assembly/assembly.xml</descriptor>
+                    </descriptors>
+                </configuration>
             </plugin>
         </plugins>
     </build>

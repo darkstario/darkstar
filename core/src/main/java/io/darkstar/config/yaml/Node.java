@@ -4,6 +4,8 @@ public interface Node<T> {
 
     String getName();
 
+    String getTag();
+
     boolean hasParent();
 
     Node getParent();

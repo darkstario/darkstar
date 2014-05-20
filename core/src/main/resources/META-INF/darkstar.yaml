@@ -1,4 +1,12 @@
 ---
+#cluster:
+#  enabled: true
+#  local: true
+#  addresses: ${darkstar.cluster.addresses}
+#  group:
+#    name: ${darkstar.cluster.group.name}
+#    password: ${darkstar.cluster.group.password}
+
 http:
 
   connectors:

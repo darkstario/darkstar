@@ -1,57 +1,9 @@
 package io.darkstar;
 
-import io.darkstar.config.spring.yaml.YamlBeanDefinitionReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
-import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.core.io.FileSystemResource;
-
 @SuppressWarnings("unchecked")
 public class Darkstar {
 
-    private static final Logger log = LoggerFactory.getLogger(Darkstar.class);
-
-    private final GenericApplicationContext appCtx;
-    private final String configFileLocation;
-    private final long startMillis;
-
-    private Darkstar(long startMillis, String configFileLocation) {
-        this.startMillis = startMillis;
-        this.configFileLocation = configFileLocation;
-        this.appCtx = new GenericApplicationContext();
-    }
-
-    public void run() throws Exception {
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                long start = System.currentTimeMillis();
-                log.info("Darkstar shutting down...");
-                appCtx.close();
-                log.info("Darkstar shut down in {} ms", (System.currentTimeMillis() - start));
-            }
-        });
-
-        //scan for classes:
-        ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(appCtx);
-        scanner.scan("io.darkstar");
-
-        //handle YAML config:
-        YamlBeanDefinitionReader yamlReader = new YamlBeanDefinitionReader(appCtx);
-        yamlReader.loadBeanDefinitions(new FileSystemResource(configFileLocation));
-
-        //start:
-        appCtx.refresh();
-
-        long duration = System.currentTimeMillis() - this.startMillis;
-        log.info("Darkstar started in {} ms", duration);
-    }
-
     public static void main(String[] args) throws Exception {
-
-        log.info("Darkstar starting...");
 
         long startupMillis = System.currentTimeMillis();
 
@@ -70,7 +22,7 @@ public class Darkstar {
         final String configFileLocation = applyUserHome(yamlFilePath);
 
         try {
-            new Darkstar(startupMillis, configFileLocation).run();
+            new DarkstarServer(startupMillis, configFileLocation).start();
         } catch (Exception e) {
             e.printStackTrace(System.err);
             System.exit(-1);

@@ -41,6 +41,14 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast-spring</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.stormpath.sdk</groupId>
             <artifactId>stormpath-sdk-api</artifactId>
         </dependency>

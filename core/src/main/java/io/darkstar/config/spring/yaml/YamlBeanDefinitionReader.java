@@ -23,6 +23,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -125,7 +127,8 @@ public class YamlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
     @SuppressWarnings("UnusedParameters")
     protected Object loadYamlContent(Yaml yaml, InputStream is, Resource resource) {
-        return yaml.load(is);
+        Charset charset = Charset.forName("UTF-8");
+        return yaml.compose(new InputStreamReader(is, charset));
     }
 
     /**
@@ -142,7 +145,16 @@ public class YamlBeanDefinitionReader extends AbstractBeanDefinitionReader {
     protected int doLoadBeanDefinitions(Yaml yaml, InputStream is, Resource resource) throws BeanDefinitionStoreException {
         try {
             Object content = loadYamlContent(yaml, is, resource);
-            Node root = nodeFactory.createGraph("main", content);
+
+            Node root;
+
+            if (content instanceof org.yaml.snakeyaml.nodes.Node) {
+                org.yaml.snakeyaml.nodes.Node node = (org.yaml.snakeyaml.nodes.Node)content;
+                root = nodeFactory.createGraph("main", node);
+            } else {
+                root = nodeFactory.createGraph("main", content);
+            }
+
             return registerBeanDefinitions(root, resource);
         } catch (BeanDefinitionStoreException ex) {
             throw ex;
