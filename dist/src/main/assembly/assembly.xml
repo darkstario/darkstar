@@ -12,7 +12,7 @@
             <directory>src/main/resources</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
-                <include>LICENSE.txt</include>
+                <include>**/*</include>
             </includes>
         </fileSet>
         <fileSet>
@@ -23,14 +23,18 @@
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/appassembler/lib</directory>
-            <outputDirectory>/lib</outputDirectory>
+            <directory>${project.build.directory}/generated-resources/appassembler/jsw/${project.artifactId}</directory>
+            <outputDirectory>/</outputDirectory>
             <includes>
-                <include>*</include>
+                <include>**/*</include>
             </includes>
+            <excludes>
+                <exclude>bin</exclude>
+                <exclude>bin/**</exclude>
+            </excludes>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/appassembler/bin</directory>
+            <directory>${project.build.directory}/generated-resources/appassembler/jsw/${project.artifactId}/bin</directory>
             <outputDirectory>/bin</outputDirectory>
             <includes>
                 <include>*</include>

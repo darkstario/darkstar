@@ -13,8 +13,8 @@
     <artifactId>darkstar-root</artifactId>
     <packaging>pom</packaging>
     <version>0.1.0-SNAPSHOT</version>
-    <name>Darkstar</name>
-    <description>Darkstar is a high-performance reverse proxy load balancer.</description>
+    <name>Darkstar :: Root</name>
+    <description>A high-performance reverse proxy load balancer.</description>
     <url>https://github.com/darkstario/darkstar</url>
     <inceptionYear>2014</inceptionYear>
 

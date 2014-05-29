@@ -1,7 +1,16 @@
 package io.darkstar;
 
-@SuppressWarnings("unchecked")
+import java.io.File;
+
 public class Darkstar {
+
+    private static final String APP_HOME_SYSTEM_PROP = "app.home";
+
+    private static String getDefaultConfigFilePath() {
+        return System.getProperty(APP_HOME_SYSTEM_PROP) + File.separatorChar
+                + "etc" + File.separatorChar +
+                "config.yaml";
+    }
 
     public static void main(String[] args) throws Exception {
 
@@ -10,7 +19,7 @@ public class Darkstar {
         String yamlFilePath;
 
         if (args.length == 0) {
-            yamlFilePath = "/etc/darkstar/config.yaml";
+            yamlFilePath = getDefaultConfigFilePath();
         } else if (args.length == 1) {
             yamlFilePath = args[0];
         } else {

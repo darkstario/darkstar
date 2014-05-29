@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>darkstar</artifactId>
-    <name>Darkstar :: Dist</name>
+    <name>Darkstar</name>
     <packaging>pom</packaging>
 
     <dependencies>
@@ -22,31 +22,83 @@
     </dependencies>
 
     <build>
-        <finalName>darkstar-${project.version}</finalName>
+        <finalName>${project.artifactId}-${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>appassembler-maven-plugin</artifactId>
                 <version>1.8</version>
-                <configuration>
-                    <programs>
-                        <program>
-                            <mainClass>io.darkstar.Darkstar</mainClass>
-                            <id>darkstar</id>
-                        </program>
-                    </programs>
-                    <repositoryName>lib</repositoryName>
-                    <repositoryLayout>flat</repositoryLayout>
-                    <licenseHeaderFile>src/main/resources/LICENSE.txt</licenseHeaderFile>
-                </configuration>
                 <executions>
                     <execution>
                         <phase>prepare-package</phase>
                         <goals>
-                            <goal>assemble</goal>
+                            <goal>generate-daemons</goal>
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <daemons>
+                        <daemon>
+                            <id>${project.artifactId}</id>
+                            <mainClass>io.darkstar.Darkstar</mainClass>
+                            <jvmSettings>
+                                <!-- <initialMemorySize>64M</initialMemorySize>
+                                <maxMemorySize>200M</maxMemorySize>
+                                <maxStackSize>128M</maxStackSize> -->
+                                <systemProperties>
+                                    <systemProperty>logback.configurationFile=../etc/logback.xml</systemProperty>
+                                    <systemProperty>app.home=%APP_BASE%</systemProperty>
+                                </systemProperties>
+                            </jvmSettings>
+                            <platforms>
+                                <platform>jsw</platform>
+                            </platforms>
+                            <generatorConfigurations>
+                                <generatorConfiguration>
+                                    <generator>jsw</generator>
+                                    <includes>
+                                        <include>aix-ppc-32</include>
+                                        <include>aix-ppc-64</include>
+                                        <include>hpux-parisc-64</include>
+                                        <include>linux-x86-32</include>
+                                        <include>linux-x86-64</include>
+                                        <include>linux-ppc-64</include>
+                                        <include>macosx-ppc-32</include>
+                                        <include>macosx-x86-universal-32</include>
+                                        <include>macosx-universal-32</include>
+                                        <include>macosx-universal-64</include>
+                                        <include>solaris-sparc-32</include>
+                                        <include>solaris-sparc-64</include>
+                                        <include>solaris-x86-32</include>
+                                        <include>windows-x86-32</include>
+                                        <include>windows-x86-64</include>
+                                    </includes>
+                                    <configuration>
+                                        <property>
+                                            <name>wrapper.logfile</name>
+                                            <value>%APP_BASE%/logs/wrapper.log</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.console.title</name>
+                                            <value>Darkstar</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.ntservice.displayname</name>
+                                            <value>Darkstar</value>
+                                        </property>
+                                    </configuration>
+                                </generatorConfiguration>
+                            </generatorConfigurations>
+                        </daemon>
+                    </daemons>
+                    <repositoryName>lib</repositoryName>
+                    <repositoryLayout>flat</repositoryLayout>
+                    <useWildcardClassPath>true</useWildcardClassPath>
+                    <licenseHeaderFile>src/main/resources/LICENSE.txt</licenseHeaderFile>
+                    <extraJvmArguments>-Dlogback.configurationFile=@BASEDIR@/etc/logback.xml</extraJvmArguments>
+                    <logsDirectory>logs</logsDirectory>
+                    <configurationSourceDirectory>src/main/resources/etc</configurationSourceDirectory>
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -61,7 +113,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <finalName>darkstar-${project.version}</finalName>
+                    <finalName>${project.artifactId}-${project.version}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                     <descriptors>
                         <descriptor>src/main/assembly/assembly.xml</descriptor>

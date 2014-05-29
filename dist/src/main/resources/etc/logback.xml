@@ -16,7 +16,8 @@
         <appender-ref ref="console"/>
     </root>
 
-    <logger name="io.darkstar" level="INFO"/>
+    <logger name="io.darkstar" level="WARN"/>
+    <logger name="io.darkstar.DarkstarServer" level="INFO"/>
 
     <!-- WARN or lower currently shows "Failed to find the current process ID; using a random value: XXXXX"
          not sure why yet: -->
