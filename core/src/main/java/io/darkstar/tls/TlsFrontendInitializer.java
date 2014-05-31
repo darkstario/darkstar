@@ -10,7 +10,8 @@ import org.springframework.stereotype.Component;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
-@Component("tlsFrontendInitializer")
+@SuppressWarnings("UnusedDeclaration")
+@Component("tlsFrontendInitializer") //referenced by name in io.darkstar.config.http.connector.ConnectorBeanDefinitionParser
 public class TlsFrontendInitializer extends FrontendInitializer {
 
     @Autowired

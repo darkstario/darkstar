@@ -27,7 +27,6 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.shiro.util.AntPathMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,9 +62,10 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
     //whether or not a frontend-to-backend tunnel is established
     private volatile boolean tunnelEstablished;
 
-    private AntPathMatcher pathMatcher;
+    //private AntPathMatcher pathMatcher;
 
-    private URI requestUri; //request URI
+    @SuppressWarnings("FieldCanBeLocal")
+    private URI  requestUri; //request URI
     private Host requestedHost; //Host specified in the request
     private Host destinationHost; //Actual host that we connect to based on load balancing rules
 
@@ -74,7 +74,7 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
     private Queue<HttpObject> messageQueue;
 
     public FrontendHttpHandler() {
-        this.pathMatcher = new AntPathMatcher();
+        //this.pathMatcher = new AntPathMatcher();
         this.messageQueue = new ConcurrentLinkedQueue<>();
     }
 
@@ -92,10 +92,10 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
         // Start the connection attempt.
         Bootstrap b = new Bootstrap();
         b.group(frontendChannel.eventLoop())
-                .channel(ctx.channel().getClass())
-                .handler(new BackendInitializer(frontendChannel, this.eventBus))
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
-                .option(ChannelOption.AUTO_READ, false);
+         .channel(ctx.channel().getClass())
+         .handler(new BackendInitializer(frontendChannel, this.eventBus))
+         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+         .option(ChannelOption.AUTO_READ, false);
 
         ChannelFuture f = b.connect(destination.getName(), destination.getPort());
 
@@ -208,10 +208,10 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
                 modifiedRequest.headers().set(originalRequest.headers());
             }
 
+            /*
             //check to see if authc required:
             boolean authcRequired = false;
             String decodedPath = requestUri.getPath();
-            /*
             for (String pattern : stormpathConfig.getAuthenticate()) {
                 if (pathMatcher.match(pattern, decodedPath)) {
                     authcRequired = true;
@@ -374,7 +374,13 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
             return new DefaultHost(requestUri.getHost(), port);
         }
 
-        return HostParser.INSTANCE.parse(hostHeaderValue);
+        try {
+            return HostParser.INSTANCE.parse(hostHeaderValue);
+        } catch (Exception e) {
+            //whatever was specified was not a valid value, so return null.  The method caller will react to a
+            //null value with a 400 error response:
+            return null;
+        }
     }
 
     private static Host getHost(SocketAddress addr) {
@@ -433,20 +439,20 @@ public class FrontendHttpHandler extends ChannelHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         if (backendChannel != null) {
-            closeOnFlush(backendChannel);
+            flushAndClose(backendChannel);
         }
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         log.error("Unexpected exception.", cause);
-        closeOnFlush(ctx.channel());
+        flushAndClose(ctx.channel());
     }
 
     /**
      * Closes the specified channel after all queued write requests are flushed.
      */
-    static void closeOnFlush(Channel ch) {
+    static void flushAndClose(Channel ch) {
         if (ch.isActive()) {
             ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
         }

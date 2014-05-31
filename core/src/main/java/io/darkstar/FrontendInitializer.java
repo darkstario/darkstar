@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-@Component("frontendInitializer")
+@Component("frontendInitializer") //referenced by name in io.darkstar.config.http.connector.ConnectorBeanDefinitionParser
 public class FrontendInitializer extends ChannelInitializer<SocketChannel> {
 
     @Autowired

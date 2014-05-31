@@ -38,12 +38,12 @@ public class BackendHandler extends ChannelHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        FrontendHttpHandler.closeOnFlush(frontendChannel);
+        FrontendHttpHandler.flushAndClose(frontendChannel);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();
-        FrontendHttpHandler.closeOnFlush(ctx.channel());
+        FrontendHttpHandler.flushAndClose(ctx.channel());
     }
 }
