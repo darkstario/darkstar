@@ -61,10 +61,13 @@ public class SniKeyManager extends X509ExtendedKeyManager {
 
         // If we got given a hostname over SNI, check if we have a cert and key for that hostname. If so, we use it.
         // Otherwise, we fall back to the default certificate.
-        if (hostname != null && (getCertificateChain(hostname) != null && getPrivateKey(hostname) != null))
+        X509Certificate[] certChain = getCertificateChain(hostname);
+        PrivateKey privateKey = getPrivateKey(hostname);
+        if (hostname != null && certChain != null && privateKey != null) {
             return hostname;
-        else
-            return defaultAlias;
+        }
+
+        return defaultAlias;
     }
 
     @Override

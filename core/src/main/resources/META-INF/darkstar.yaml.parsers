@@ -1,3 +1,4 @@
-http = io.darkstar.config.spring.yaml.ContainerBeanDefinitionParser
+# YAML config support is on pause while core functionality is being built
+http = org.springframework.beans.factory.yaml.ContainerBeanDefinitionParser
 connectors = io.darkstar.config.http.connector.ConnectorsBeanDefinitionParser
 vhosts = io.darkstar.config.http.vhost.VhostsBeanDefinitionParser

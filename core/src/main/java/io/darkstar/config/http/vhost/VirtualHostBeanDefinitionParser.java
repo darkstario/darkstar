@@ -1,15 +1,15 @@
 package io.darkstar.config.http.vhost;
 
-import io.darkstar.config.spring.yaml.AbstractBeanDefinitionParser;
-import io.darkstar.config.spring.yaml.BeanDefinitionResult;
-import io.darkstar.config.spring.yaml.ParserContext;
-import io.darkstar.config.yaml.MappingNode;
-import io.darkstar.config.yaml.Node;
 import io.darkstar.http.DefaultVirtualHost;
 import io.darkstar.net.Host;
 import io.darkstar.net.HostParser;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.ManagedSet;
+import org.springframework.beans.factory.yaml.AbstractBeanDefinitionParser;
+import org.springframework.beans.factory.yaml.BeanDefinitionResult;
+import org.springframework.beans.factory.yaml.MappingNode;
+import org.springframework.beans.factory.yaml.Node;
+import org.springframework.beans.factory.yaml.ParserContext;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 

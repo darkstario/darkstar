@@ -1,19 +1,7 @@
 package io.darkstar.event;
 
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-import io.darkstar.metrics.MetricValue;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.stereotype.Component;
-
-import java.util.concurrent.atomic.AtomicLong;
-
-@Component
-public class RequestMetricsService implements InitializingBean {
+//@Component
+public class RequestMetricsService { /* implements InitializingBean {
 
     @Autowired
     private TaskScheduler executor;
@@ -65,7 +53,7 @@ public class RequestMetricsService implements InitializingBean {
         };
 
         executor.scheduleAtFixedRate(oneSecondTask, 1000l);
-    }
+    }*/
 
     /*private String getStatsMessage() {
         StringBuilder sb = new StringBuilder();
@@ -81,6 +69,8 @@ public class RequestMetricsService implements InitializingBean {
         sb.append(" req/15m)");
         return sb.toString();
     }*/
+
+    /*
 
     @SuppressWarnings("UnusedDeclaration") //called by the EventBus via reflection
     @Subscribe

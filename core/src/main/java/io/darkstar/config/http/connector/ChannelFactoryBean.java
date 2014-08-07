@@ -4,6 +4,7 @@ import io.darkstar.net.DefaultHost;
 import io.darkstar.net.Host;
 import io.darkstar.net.HostParser;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -97,6 +98,11 @@ public class ChannelFactoryBean extends AbstractFactoryBean<Channel> implements 
 
         ServerBootstrap bootstrap = new ServerBootstrap()
                 .group(bossGroup, workerGroup)
+                // ALLOCATOR, see:
+                // - https://blog.twitter.com/2013/netty-4-at-twitter-reduced-gc-overhead
+                // - https://www.youtube.com/watch?v=_GRIyCMNGGI&t=1183
+                // - http://normanmaurer.me/presentations/2014-facebook-eng-netty/slides.html#14.0
+                .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                 .option(ChannelOption.SO_BACKLOG, 1024)
                 .channel(NioServerSocketChannel.class)
                 .childOption(ChannelOption.AUTO_READ, false);

@@ -7,7 +7,7 @@ public class NioEventLoopGroupFactoryBean extends AbstractFactoryBean<NioEventLo
 
     private int numThreads = 0; //zero means let Netty choose based on num processors
 
-    @SuppressWarnings("UnusedDeclaration") //called via reflection and bean property values
+    @SuppressWarnings("UnusedDeclaration") //can be called via reflection and bean property values
     public void setNumThreads(int numThreads) {
         this.numThreads = numThreads;
     }

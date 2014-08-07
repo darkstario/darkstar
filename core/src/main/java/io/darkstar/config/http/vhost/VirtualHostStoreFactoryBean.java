@@ -1,10 +1,10 @@
 package io.darkstar.config.http.vhost;
 
-import com.stormpath.sdk.lang.Assert;
 import io.darkstar.http.DefaultVirtualHostStore;
 import io.darkstar.http.VirtualHost;
 import io.darkstar.http.VirtualHostStore;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Set;

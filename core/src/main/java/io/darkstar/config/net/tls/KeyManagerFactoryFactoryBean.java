@@ -1,7 +1,7 @@
 package io.darkstar.config.net.tls;
 
-import com.stormpath.sdk.lang.Assert;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import javax.net.ssl.KeyManagerFactory;

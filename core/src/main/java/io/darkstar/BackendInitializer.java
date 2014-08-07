@@ -13,8 +13,8 @@ public class BackendInitializer extends ChannelInitializer<SocketChannel> {
     private final Channel frontendChannel;
     private EventBus eventBus;
 
-    public BackendInitializer(Channel frontendChannel, EventBus eventBus) {
-        this.frontendChannel = frontendChannel;
+    public BackendInitializer(Channel gatewayChannel, EventBus eventBus) {
+        this.frontendChannel = gatewayChannel;
         this.eventBus = eventBus;
     }
 

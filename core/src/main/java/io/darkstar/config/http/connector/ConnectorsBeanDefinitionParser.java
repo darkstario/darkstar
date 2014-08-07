@@ -1,13 +1,13 @@
 package io.darkstar.config.http.connector;
 
-import io.darkstar.config.spring.yaml.AbstractBeanDefinitionParser;
-import io.darkstar.config.spring.yaml.BeanDefinitionParser;
-import io.darkstar.config.spring.yaml.BeanDefinitionResult;
-import io.darkstar.config.spring.yaml.DefaultBeanDefinitionResult;
-import io.darkstar.config.spring.yaml.ParserContext;
-import io.darkstar.config.yaml.MappingNode;
-import io.darkstar.config.yaml.Node;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
+import org.springframework.beans.factory.yaml.AbstractBeanDefinitionParser;
+import org.springframework.beans.factory.yaml.BeanDefinitionParser;
+import org.springframework.beans.factory.yaml.BeanDefinitionResult;
+import org.springframework.beans.factory.yaml.DefaultBeanDefinitionResult;
+import org.springframework.beans.factory.yaml.MappingNode;
+import org.springframework.beans.factory.yaml.Node;
+import org.springframework.beans.factory.yaml.ParserContext;
 import org.springframework.util.CollectionUtils;
 
 import java.util.LinkedHashMap;

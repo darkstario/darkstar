@@ -1,10 +1,11 @@
 package io.darkstar;
 
-import io.darkstar.config.spring.yaml.YamlBeanDefinitionReader;
+import org.springframework.beans.factory.yaml.YamlBeanDefinitionReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.context.Lifecycle;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.context.support.GenericApplicationContext;
@@ -68,9 +69,14 @@ public class DarkstarServer implements InitializingBean, DisposableBean, Lifecyc
         ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(appCtx);
         scanner.scan("io.darkstar");
 
-        //handle YAML config:
-        YamlBeanDefinitionReader yamlReader = new YamlBeanDefinitionReader(appCtx);
-        yamlReader.loadBeanDefinitions(new FileSystemResource(configFileLocation));
+        if (configFileLocation.endsWith("xml")) {
+            XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(appCtx);
+            xmlReader.loadBeanDefinitions(new FileSystemResource(configFileLocation));
+        } else {
+            //handle YAML config:
+            YamlBeanDefinitionReader yamlReader = new YamlBeanDefinitionReader(appCtx);
+            yamlReader.loadBeanDefinitions(new FileSystemResource(configFileLocation));
+        }
 
         //start:
         appCtx.refresh();

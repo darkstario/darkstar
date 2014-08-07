@@ -1,19 +1,7 @@
 package io.darkstar.ducksboard;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-import io.darkstar.event.RequestMetricsEvent;
-import io.darkstar.metrics.MetricValue;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.task.AsyncListenableTaskExecutor;
-import org.springframework.stereotype.Component;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 //@Component
-public class RequestDucksboardReporter implements InitializingBean {
+public class RequestDucksboardReporter { /* implements InitializingBean {
 
     @Autowired
     private AsyncListenableTaskExecutor executor;
@@ -103,7 +91,8 @@ public class RequestDucksboardReporter implements InitializingBean {
             }
             return String.format("%.2f", value);
         }
-        */
 
     }
+
+    */
 }

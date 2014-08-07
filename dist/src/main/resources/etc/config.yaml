@@ -1,4 +1,13 @@
 ---
+
+## YAML SUPPORT IS CURRENTLY PAUSED
+#
+# YAML config has been postponed while core features are being built.  If you would like
+# YAML config support, please help us implement it!
+#
+
+
+
 #cluster:
 #  enabled: true
 #  local: true
@@ -21,9 +30,9 @@ http:
 
   vhosts:
 
-    '*.foo.com':
+    vhost.com:
 
-      origin: whatever.com
+      origin: localhost:8080
 
       #tls:
       #  cert: core/src/test/resources/example.com.crt.pem

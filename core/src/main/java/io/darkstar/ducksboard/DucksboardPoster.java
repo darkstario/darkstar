@@ -1,21 +1,8 @@
 package io.darkstar.ducksboard;
 
-import org.apache.shiro.codec.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.dao.TransientDataAccessResourceException;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
-
-import java.nio.charset.Charset;
-
 public class DucksboardPoster {
 
+    /*
     private static final Logger log = LoggerFactory.getLogger(DucksboardPoster.class);
     private static final String BASE_URL = "https://push.ducksboard.com/v/";
     private static final String AUTHORIZATION = "Authorization";
@@ -51,5 +38,6 @@ public class DucksboardPoster {
             log.warn("Unable to post content to Ducksboard", e);
         }
     }
+    */
 
 }

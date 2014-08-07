@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- TLS -->
+    <bean id="darkstarKeyStore" class="io.darkstar.config.net.tls.MemoryKeyStoreFactoryBean"/>
+    <bean id="darkstarKeyEntryFactory" class="io.darkstar.tls.BouncyCastleKeyEntryFactory"/>
+    <bean id="darkstarKeyStoreManager" class="io.darkstar.security.DefaultKeyStoreManager">
+        <constructor-arg name="keyStore" ref="darkstarKeyStore"/>
+        <constructor-arg name="keyPassword" value="changeit"/>
+        <constructor-arg name="keyEntryFactory" ref="darkstarKeyEntryFactory"/>
+    </bean>
+    <bean id="darkstarKeyManagerFactory" class="io.darkstar.config.net.tls.KeyManagerFactoryFactoryBean">
+        <property name="keyStore" ref="darkstarKeyStore"/>
+        <property name="keyStorePassword" value="changeit"/>
+    </bean>
+    <bean id="darkstarSniKeyManager" class="io.darkstar.config.net.tls.SniKeyManagerFactoryBean">
+        <property name="keyManagerFactory" ref="darkstarKeyManagerFactory"/>
+    </bean>
+    <bean id="darkstarSslContext" class="io.darkstar.config.net.tls.SslContextFactoryBean">
+        <property name="keyManager" ref="darkstarSniKeyManager"/>
+    </bean>
+
+    <!-- Netty -->
+    <bean id="darkstarNettyWorkerGroup" class="io.darkstar.config.http.connector.NioEventLoopGroupFactoryBean"/>
+    <bean id="darkstarHttpChannel" class="io.darkstar.config.http.connector.ChannelFactoryBean">
+        <property name="workerGroup" ref="darkstarNettyWorkerGroup"/>
+        <property name="channelInitializer" ref="httpGatewayChannelInitializer"/>
+        <property name="port" value="8000"/>
+    </bean>
+    <bean id="darkstarHttpsChannel" class="io.darkstar.config.http.connector.ChannelFactoryBean">
+        <property name="workerGroup" ref="darkstarNettyWorkerGroup"/>
+        <property name="channelInitializer" ref="tlsHttpGatewayChannelInitializer"/>
+        <property name="port" value="8443"/>
+    </bean>
+
+    <!-- Load Balancing: -->
+    <bean id="originHostResolver" class="io.darkstar.lb.LoadBalancingOriginHostResolver">
+
+    </bean>
+
+</beans>

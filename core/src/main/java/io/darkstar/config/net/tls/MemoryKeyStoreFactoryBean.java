@@ -15,6 +15,14 @@ public class MemoryKeyStoreFactoryBean extends AbstractFactoryBean<KeyStore> {
         return KeyStore.class;
     }
 
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setProviderName(String providerName) {
+        this.providerName = providerName;
+    }
+
     @Override
     protected KeyStore createInstance() throws Exception {
 
@@ -31,7 +39,7 @@ public class MemoryKeyStoreFactoryBean extends AbstractFactoryBean<KeyStore> {
             ks = KeyStore.getInstance(type);
         }
 
-        ks.load(null);
+        ks.load(null); //loading without params makes it a memory-only store (go figure!).
 
         return ks;
     }

@@ -1,17 +1,8 @@
 package io.darkstar.config.spring;
 
-import ch.qos.logback.access.PatternLayoutEncoder;
-import ch.qos.logback.core.FileAppender;
-import io.darkstar.config.json.LogConfig;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.RuntimeBeanReference;
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+public class AccessLogBeanDefinitionFactory {
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-public class AccessLogBeanDefinitionFactory implements BeanDefinitionFactory<LogConfig> {
+    /*
 
     @Override
     public Map<String, BeanDefinition> createBeanDefinitions(String beanNamePrefix, LogConfig src) {
@@ -37,4 +28,6 @@ public class AccessLogBeanDefinitionFactory implements BeanDefinitionFactory<Log
 
         return defs;
     }
+
+    */
 }

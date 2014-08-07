@@ -1,10 +1,10 @@
 package io.darkstar.config.http.vhost;
 
-import com.stormpath.sdk.lang.Assert;
 import io.darkstar.http.DefaultVirtualHostResolver;
 import io.darkstar.http.VirtualHostResolver;
 import io.darkstar.http.VirtualHostStore;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
+import org.springframework.util.Assert;
 
 public class VirtualHostResolverFactoryBean extends AbstractFactoryBean {
 

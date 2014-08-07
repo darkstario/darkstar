@@ -16,6 +16,16 @@
     <packaging>jar</packaging>
 
     <dependencies>
+
+        <dependency>
+            <groupId>io.darkstar</groupId>
+            <artifactId>darkstar-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.darkstar</groupId>
+            <artifactId>spring-yaml</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
