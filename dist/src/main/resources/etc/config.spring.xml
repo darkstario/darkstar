@@ -31,7 +31,7 @@
     </bean>
     <bean id="darkstarHttpsChannel" class="io.darkstar.config.http.connector.ChannelFactoryBean">
         <property name="workerGroup" ref="darkstarNettyWorkerGroup"/>
-        <property name="channelInitializer" ref="tlsHttpGatewayChannelInitializer"/>
+        <property name="channelInitializer" ref="httpsGatewayChannelInitializer"/>
         <property name="port" value="8443"/>
     </bean>
 

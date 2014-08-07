@@ -10,8 +10,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
 @SuppressWarnings("UnusedDeclaration") //referenced in config.spring.xml
-@Component("tlsHttpGatewayChannelInitializer")
-public class TlsHttpGatewayChannelInitializer extends HttpGatewayChannelInitializer {
+@Component("httpsGatewayChannelInitializer")
+public class HttpsGatewayChannelInitializer extends HttpGatewayChannelInitializer {
 
     @Autowired
     private SSLContext sslContext;
